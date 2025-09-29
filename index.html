@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartelera de Reuniones - Congregación Las Colonias</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header principal -->
+    <header class="main-header">
+        <div class="container">
+            <h1>Programa para la reunión de entre semana</h1>
+            <h2>Las Colonias octubre 2025</h2>
+            <button id="admin-access-btn" class="admin-btn">
+                <i class="admin-icon">⚙️</i> Acceso Administrativo
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenido principal público -->
+    <main class="public-content">
+        <div class="container">
+            <div class="navigation">
+                <button class="nav-btn active" data-section="octubre-2">02 Octubre</button>
+                <button class="nav-btn" data-section="octubre-9">09 Octubre</button>
+                <button class="nav-btn" data-section="octubre-16">16 Octubre</button>
+                <button class="nav-btn" data-section="octubre-23">23 Octubre</button>
+                <button class="nav-btn" data-section="octubre-30">30 Octubre</button>
+            </div>
+            
+            <div id="meeting-content">
+                <!-- El contenido de la reunión se cargará aquí dinámicamente -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de login para administración -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Acceso al Mantenedor</h2>
+            <p>Esta área es solo para administradores autorizados</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="password">Contraseña:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Acceder</button>
+                    <button type="button" id="login-cancel" class="btn-secondary">Cancelar</button>
+                </div>
+            </form>
+            <div id="login-message" class="message"></div>
+        </div>
+    </div>
+
+    <!-- Panel de administración (oculto inicialmente) -->
+    <div id="admin-panel" class="admin-panel" style="display: none;">
+        <div class="container">
+            <div class="admin-header">
+                <h2>Mantenedor de Reuniones</h2>
+                <div class="admin-buttons">
+                    <button id="back-to-public" class="btn-secondary">Volver a la Cartelera</button>
+                    <button id="logout-btn" class="btn-logout">Cerrar Sesión</button>
+                </div>
+            </div>
+
+            <div class="admin-controls">
+                <button id="add-meeting-btn" class="btn-primary">➕ Agregar Nueva Reunión</button>
+                <button id="export-data-btn" class="btn-secondary">📥 Exportar Datos</button>
+            </div>
+
+            <div class="meetings-list">
+                <h3>Reuniones Programadas</h3>
+                <div id="meetings-container">
+                    <!-- Las reuniones se cargarán aquí dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Modal para agregar/editar reuniones -->
+            <div id="meeting-modal" class="modal">
+                <div class="modal-content large-modal">
+                    <span class="close-meeting">&times;</span>
+                    <h2 id="modal-title">Agregar Nueva Reunión</h2>
+                    <form id="meeting-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="meeting-date">Fecha:</label>
+                                <input type="date" id="meeting-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="meeting-key">Clave (ej: octubre-2):</label>
+                                <input type="text" id="meeting-key" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="meeting-bible">Referencia Bíblica:</label>
+                                <input type="text" id="meeting-bible" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="meeting-president">Presidente:</label>
+                                <input type="text" id="meeting-president" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="meeting-opening-prayer">Oración Inicial:</label>
+                                <input type="text" id="meeting-opening-prayer" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="meeting-closing-prayer">Oración Final:</label>
+                                <input type="text" id="meeting-closing-prayer" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Contenido de la Reunión (JSON):</label>
+                            <textarea id="meeting-content-json" rows="12" placeholder='Ej: [{"type": "song", "number": 93}, ...]'></textarea>
+                            <small>Usa el formato JSON correcto. Puedes copiar y modificar desde una reunión existente.</small>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">💾 Guardar Reunión</button>
+                            <button type="button" id="cancel-btn" class="btn-secondary">❌ Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <div class="container">
+            <p>Cartelera de Reuniones &copy; 2025 - Congregación Las Colonias</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
