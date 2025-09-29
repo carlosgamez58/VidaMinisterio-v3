@@ -26,6 +26,12 @@ body {
     position: relative;
 }
 
+.main-header .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .main-header h1 {
     font-size: 2.2rem;
     margin-bottom: 10px;
@@ -49,6 +55,7 @@ body {
     font-size: 1rem;
     transition: all 0.3s;
     backdrop-filter: blur(10px);
+    align-self: center;
 }
 
 .admin-btn:hover {
@@ -154,15 +161,15 @@ body {
 
 /* Colores diferentes para cada tipo de sección */
 .section-tesoros {
-    background: #575A5D/*linear-gradient(135deg, #e74c3c, #c0392b)*/;
+    background: #575A5D;
 }
 
 .section-maestros {
-    background: #BE8900/*linear-gradient(135deg, #f39c12, #e67e22)*/;
+    background: #BE8900;
 }
 
 .section-vida {
-    background: #7E0024/*linear-gradient(135deg, #27ae60, #2ecc71)*/;
+    background: #7E0024;
 }
 
 .section-otros {
@@ -265,7 +272,6 @@ body {
 .admin-header h2 {
     color: #2c3e50;
     font-size: 1.8rem;
-    
 }
 
 .admin-buttons {
@@ -442,6 +448,7 @@ body {
     color: #000;
 }
 
+/* Estilos del formulario - BASE */
 .form-group {
     margin-bottom: 20px;
 }
@@ -497,6 +504,23 @@ body {
     margin-top: 25px;
 }
 
+/* Secciones del formulario */
+.form-section {
+    margin: 25px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.form-section h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e1e8ed;
+    font-size: 1.1rem;
+}
+
 .message {
     margin-top: 15px;
     padding: 12px;
@@ -539,7 +563,9 @@ body {
     margin-top: 40px;
 }
 
-/* Responsive */
+/* ========== RESPONSIVE DESIGN ========== */
+
+/* Tablet y Mobile */
 @media (max-width: 768px) {
     .navigation {
         flex-direction: column;
@@ -547,7 +573,7 @@ body {
     
     .admin-header {
         flex-direction: column;
-        gap: 20px;
+        gap: 15px;
         text-align: center;
     }
     
@@ -605,4 +631,139 @@ body {
         width: 100%;
         text-align: left;
     }
+    
+    /* Formularios en mobile */
+    .form-section {
+        margin: 20px 0;
+        padding: 15px;
+    }
+    
+    .form-section h3 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+    }
+    
+    .form-group input, 
+    .form-group textarea, 
+    .form-group select {
+        font-size: 16px;
+        padding: 14px 12px;
+    }
+    
+    .modal-content.large-modal {
+        width: 95%;
+        margin: 5% auto;
+        padding: 20px 15px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .form-actions button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
+/* Mobile pequeño */
+@media (max-width: 480px) {
+    .main-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .main-header h2 {
+        font-size: 1.1rem;
+    }
+    
+    .modal-content {
+        padding: 15px 10px;
+    }
+    
+    .form-section {
+        padding: 12px;
+    }
+    
+    .form-group label {
+        font-size: 0.9rem;
+    }
+    
+    .form-group input, 
+    .form-group textarea {
+        font-size: 14px;
+        padding: 12px 10px;
+    }
+    
+    #meeting-content-json {
+        font-size: 12px;
+    }
+    
+    .admin-btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Desktop - Asegurar que los estilos se mantengan */
+@media (min-width: 769px) {
+    .modal-content.large-modal {
+        max-width: 800px;
+    }
+    
+    .form-section {
+        margin: 25px 0;
+        padding: 25px;
+    }
+    
+    .form-row {
+        flex-direction: row;
+        gap: 20px;
+    }
+    
+    .form-row .form-group {
+        margin-bottom: 0;
+    }
+}
+
+/* ========== SCROLL PARA MODAL DE EDICIÓN ========== */
+.modal-content.large-modal {
+    max-height: 85vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Asegurar que el formulario sea scrollable */
+#meeting-form {
+    max-height: none;
+}
+
+/* Mejorar la visualización del scroll */
+.modal-content.large-modal::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content.large-modal::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.modal-content.large-modal::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.modal-content.large-modal::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Para Firefox */
+.modal-content.large-modal {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Ajustar el textarea JSON para que sea scrollable */
+#meeting-content-json {
+    max-height: 200px;
+    min-height: 120px;
+    overflow-y: auto;
+    resize: vertical;
 }

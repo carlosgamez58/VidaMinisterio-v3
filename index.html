@@ -116,7 +116,65 @@
                                 <input type="text" id="meeting-closing-prayer" required>
                             </div>
                         </div>
+                        <!-- Dentro del form id="meeting-form", después de los campos actuales -->
 
+                        <!-- CANCIONES -->
+                        <div class="form-section">
+                            <h3>Canciones</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="song-opening">Canción Inicial:</label>
+                                    <input type="number" id="song-opening" min="1" max="200" value="93" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="song-middle">Canción Intermedia:</label>
+                                    <input type="number" id="song-middle" min="1" max="200" value="131" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="song-closing">Canción Final:</label>
+                                    <input type="number" id="song-closing" min="1" max="200" value="51" required>
+                                </div>
+                            </div>
+                        </div>
+<!--
+                         DURACIONES PRINCIPALES 
+                        <div class="form-section">
+                            <h3>Duración de Partes Principales</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="treasure-1-duration">Duración Tesoros:</label>
+                                    <input type="text" id="treasure-1-duration" value="10 mins." required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="life-8-duration">Duración Estudio Bíblico:</label>
+                                    <input type="text" id="life-8-duration" value="30 mins." required>
+                                </div>
+                            </div>
+                        </div>
+-->
+                        <!-- TÍTULOS PRINCIPALES -->
+                        <div class="form-section">
+                            <div class="form-group">
+                                <label for="masters-1-title">Seamos Mejores Maestros:</label>
+                                <input type="text" id="masters-1-title" value="Empiece Conversaciones" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="treasure-2-title" value="Haga Revisitas" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="treasure-3-title" value="Discurso" required>
+                            </div>                                                        
+                            <div class="form-group">
+                                <label for="treasure-1-title">Tesoros de la Biblia:</label>
+                                <input type="text" id="treasure-1-title" value="Fortalezcan su cuerda triple" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="life-7-title">Nuestra Vida Cristiana:</label>
+                                <input type="text" id="life-7-title" value="Cuando tengan problemas en su matrimonio, no aparten a Jehová de su vida" required>
+                            </div>
+                        </div>
+
+                        <!-- El textarea JSON original lo mantenemos por ahora -->
                         <div class="form-group">
                             <label>Contenido de la Reunión (JSON):</label>
                             <textarea id="meeting-content-json" rows="12" placeholder='Ej: [{"type": "song", "number": 93}, ...]'></textarea>

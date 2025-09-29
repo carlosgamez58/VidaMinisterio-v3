@@ -231,7 +231,7 @@ function renderMeeting(sectionId) {
 function showLoginModal() {
     loginModal.style.display = 'block';
     loginMessage.style.display = 'none';
-    document.getElementById('password').value = '';
+    document.getElementById('password').value = '1914';
 }
 
 function handleLogin(e) {
@@ -257,14 +257,16 @@ function showAdminView() {
 }
 
 function showPublicView() {
-    adminPanel.style.display = 'none';
     publicContent.style.display = 'block';// Solo esta línea para mostrar contenido público
+    adminPanel.style.display = 'none';
+    // Asegurar que el botón admin sea visible
+    adminAccessBtn.style.display = 'block'; // ← AGREGAR ESTA LÍNEA
+    adminAccessBtn.style.margin = '20px auto 0 auto'; // Centrar el botón
     // Recargar la reunión actual
     const activeBtn = document.querySelector('.nav-btn.active');
     if (activeBtn) {
         renderMeeting(activeBtn.getAttribute('data-section'));
     }
-    adminAccessBtn.style.display = 'block';
 }
 
 function handleLogout() {
@@ -296,9 +298,9 @@ function renderAdminMeetings() {
         meetingElement.innerHTML = `
             <div class="meeting-info">
                 <h4>Reunión del ${formatDisplayDate(meeting.date)}</h4>
-                <p><strong>Referencia:</strong> ${meeting.bibleReference}</p>
+                <p><strong>Lectura:</strong> ${meeting.bibleReference}</p>
                 <p><strong>Presidente:</strong> ${meeting.president}</p>
-                <p><strong>Clave:</strong> ${key}</p>
+                <p><strong>Oración Inicial:</strong> ${meeting.openingPrayer}</p>
             </div>
             <div class="meeting-actions">
                 <button class="btn-edit" data-key="${key}">✏️ Editar</button>
@@ -330,7 +332,7 @@ function openAddModal() {
     currentEditKey = null;
     meetingModal.style.display = 'block';
 }
-
+/*
 function openEditModal(key) {
     const meeting = meetingsData[key];
     if (!meeting) return;
@@ -347,7 +349,28 @@ function openEditModal(key) {
     currentEditKey = key;
     meetingModal.style.display = 'block';
 }
-
+*/
+// CON ESTA NUEVA VERSIÓN:
+function openEditModal(key) {
+    const meeting = meetingsData[key];
+    if (!meeting) return;
+    
+    document.getElementById('modal-title').textContent = 'Editar Reunión';
+    document.getElementById('meeting-date').value = meeting.date;
+    document.getElementById('meeting-key').value = key;
+    document.getElementById('meeting-bible').value = meeting.bibleReference;
+    document.getElementById('meeting-president').value = meeting.president;
+    document.getElementById('meeting-opening-prayer').value = meeting.openingPrayer;
+    document.getElementById('meeting-closing-prayer').value = meeting.closingPrayer;
+    document.getElementById('meeting-content-json').value = JSON.stringify(meeting.content, null, 2);
+    
+    // NUEVO: Extraer valores para los nuevos campos
+    extractMeetingDetails(meeting.content);
+    
+    currentEditKey = key;
+    meetingModal.style.display = 'block';
+}
+/*
 function handleMeetingSubmit(e) {
     e.preventDefault();
     
@@ -379,6 +402,7 @@ function handleMeetingSubmit(e) {
         closingPrayer,
         content
     };
+
     
     // Guardar en localStorage
     localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
@@ -387,6 +411,64 @@ function handleMeetingSubmit(e) {
     renderAdminMeetings();
     
     // Actualizar la vista pública si estamos viendo esta reunión
+    const activeBtn = document.querySelector('.nav-btn.active');
+    if (activeBtn && activeBtn.getAttribute('data-section') === key) {
+        renderMeeting(key);
+    }
+}
+*/ 
+
+function handleMeetingSubmit(e) {
+    e.preventDefault();
+    
+    const date = document.getElementById('meeting-date').value;
+    const key = document.getElementById('meeting-key').value;
+    const bibleReference = document.getElementById('meeting-bible').value;
+    const president = document.getElementById('meeting-president').value;
+    const openingPrayer = document.getElementById('meeting-opening-prayer').value;
+    const closingPrayer = document.getElementById('meeting-closing-prayer').value;
+    
+    // Obtener los nuevos valores
+    const songOpening = parseInt(document.getElementById('song-opening').value);
+    const songMiddle = parseInt(document.getElementById('song-middle').value);
+    const songClosing = parseInt(document.getElementById('song-closing').value);
+    //const treasure1Duration = document.getElementById('treasure-1-duration').value;
+    //const life8Duration = document.getElementById('life-8-duration').value;
+    const treasure1Title = document.getElementById('treasure-1-title').value;
+    const life7Title = document.getElementById('life-7-title').value;
+    
+    let content;
+    try {
+        content = JSON.parse(document.getElementById('meeting-content-json').value);
+        
+        // Actualizar los valores en el contenido
+        content = updateContentWithFormValues(content, {
+            songOpening, songMiddle, songClosing,
+            treasure1Title, life7Title
+        });
+        
+    } catch (error) {
+        alert('Error en el formato JSON del contenido. Por favor, verifica la sintaxis.');
+        return;
+    }
+    
+    if (currentEditKey && currentEditKey !== key) {
+        delete meetingsData[currentEditKey];
+    }
+    
+    meetingsData[key] = {
+        date,
+        bibleReference,
+        president,
+        openingPrayer,
+        closingPrayer,
+        content
+    };
+    
+    localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
+    meetingModal.style.display = 'none';
+    renderAdminMeetings();
+    
     const activeBtn = document.querySelector('.nav-btn.active');
     if (activeBtn && activeBtn.getAttribute('data-section') === key) {
         renderMeeting(key);
@@ -423,7 +505,7 @@ function exportData() {
     link.click();
 }
 
-
+/*
 function formatDisplayDate(dateString) {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
@@ -431,4 +513,92 @@ function formatDisplayDate(dateString) {
         month: '2-digit',
         year: 'numeric'
     });
+}*/
+
+function formatDisplayDate(dateString) {
+    // Dividir la fecha manualmente para evitar problemas de zona horaria
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(year, month - 1, day); // month - 1 porque enero es 0
+    
+    return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric'
+    });
 }
+// ========== NUEVAS FUNCIONES AGREGAR AL FINAL ==========
+
+function extractMeetingDetails(content) {
+    // Valores por defecto
+    let songOpening = 93;
+    let songMiddle = 131;
+    let songClosing = 51;
+    let treasure1Duration = "10 mins.";
+    let life8Duration = "30 mins.";
+    let treasure1Title = "Fortalezcan su cuerda triple";
+    let life7Title = "Cuando tengan problemas en su matrimonio, no aparten a Jehová de su vida";
+    
+    // Extraer valores del contenido
+    content.forEach(item => {
+        if (item.type === "song") {
+            if (content.indexOf(item) === 0) songOpening = item.number;
+            else if (content.indexOf(item) === 4) songMiddle = item.number;
+            else if (content.indexOf(item) === 7) songClosing = item.number;
+        }
+        else if (item.type === "section" && item.title.includes("TESOROS")) {
+            if (item.items[0]) {
+                treasure1Title = item.items[0].title;
+            }
+        }
+        else if (item.type === "section" && item.title.includes("VIDA")) {
+            if (item.items[0]) life7Title = item.items[0].title;
+        }
+    });
+    
+    // Llenar los campos
+    document.getElementById('song-opening').value = songOpening;
+    document.getElementById('song-middle').value = songMiddle;
+    document.getElementById('song-closing').value = songClosing;
+    document.getElementById('treasure-1-title').value = treasure1Title;
+    document.getElementById('life-7-title').value = life7Title;
+}
+
+function updateContentWithFormValues(content, values) {
+    let songCount = 0;
+    
+    return content.map(item => {
+        if (item.type === "song") {
+            songCount++;
+            if (songCount === 1) return { ...item, number: values.songOpening };
+            if (songCount === 2) return { ...item, number: values.songMiddle };
+            if (songCount === 3) return { ...item, number: values.songClosing };
+        }
+        else if (item.type === "section" && item.title.includes("TESOROS")) {
+            return {
+                ...item,
+                items: item.items.map((sectionItem, index) => {
+                    if (index === 0) {
+                        return {
+                            ...sectionItem,
+                            title: values.treasure1Title
+                        };
+                    }
+                    return sectionItem;
+                })
+            };
+        }
+        else if (item.type === "section" && item.title.includes("VIDA")) {
+            return {
+                ...item,
+                items: item.items.map((sectionItem, index) => {
+                    if (index === 0) {
+                        return { ...sectionItem, title: values.life7Title };
+                    }
+                    return sectionItem;
+                })
+            };
+        }
+        return item;
+    });
+}
+// ========== FIN DE NUEVAS FUNCIONES ==========
