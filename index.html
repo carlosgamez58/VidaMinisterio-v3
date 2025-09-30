@@ -10,8 +10,8 @@
     <!-- Header principal -->
     <header class="main-header">
         <div class="container">
-            <h1>Programa para la reunión de entre semana</h1>
-            <h2>Las Colonias octubre 2025</h2>
+            <h1>Programa Vida Ministerio</h1>
+            <h2>Las Colonias &#127755; octubre 2025</h2>
             <button id="admin-access-btn" class="admin-btn">
                 <i class="admin-icon">⚙️</i> Acceso Administrativo
             </button>
@@ -136,34 +136,131 @@
                                 </div>
                             </div>
                         </div>
-<!--
-                         DURACIONES PRINCIPALES 
+                        <!-- TÍTULOS Y DETALLES COMPLETOS -->
                         <div class="form-section">
-                            <h3>Duración de Partes Principales</h3>
+                            <h3>Títulos, Participantes y Duración</h3>
+                            
+                            <!-- TESOROS DE LA BIBLIA -->
+                            <div class="form-group">
+                                <label>Tesoros de la Biblia:</label>
+                                <input type="text" id="treasure-1-title" value="Fortalezcan su cuerda triple" placeholder="Título parte 1" required>
+                                <input type="text" id="treasure-1-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 1" required>
+                                <input type="text" id="treasure-1-duration" value="10 mins." placeholder="Duración parte 1" required>
+                                
+                                <input type="text" id="treasure-2-title" value="Busquemos perlas escondidas" placeholder="Título parte 2" required>
+                                <input type="text" id="treasure-2-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 2" required>
+                                <input type="text" id="treasure-2-duration" value="10 mins." placeholder="Duración parte 2" required>
+                                
+                                <input type="text" id="treasure-3-title" value="Lectura de la Biblia" placeholder="Título parte 3" required>
+                                <input type="text" id="treasure-3-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 3" required>
+                                <input type="text" id="treasure-3-duration" value="4 mins." placeholder="Duración parte 3" required>
+                            </div>
+                            
+                            <!-- SEAMOS MEJORES MAESTROS -->
+                            <div class="form-group">
+                                <label>Seamos Mejores Maestros:</label>
+                                <input type="text" id="masters-1-title" value="De casa en casa" placeholder="Título parte 1" required>
+                                <input type="text" id="masters-1-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 1" required>
+                                <input type="text" id="masters-1-duration" value="4 mins." placeholder="Duración parte 1" required>
+                                
+                                <input type="text" id="masters-2-title" value="Predicación Informal" placeholder="Título parte 2" required>
+                                <input type="text" id="masters-2-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 2" required>
+                                <input type="text" id="masters-2-duration" value="4 mins." placeholder="Duración parte 2" required>
+                                
+                                <input type="text" id="masters-3-title" value="Discurso" placeholder="Título parte 3" required>
+                                <input type="text" id="masters-3-participants" value="NOMBRE" placeholder="Participantes parte 3" required>
+                                <input type="text" id="masters-3-duration" value="4 mins." placeholder="Duración parte 3" required>
+                            </div>
+                            
+                            <!-- NUESTRA VIDA CRISTIANA -->
+                            <div class="form-group">
+                                <label>Nuestra Vida Cristiana:</label>
+                                <input type="text" id="life-7-title" value="Cuando tengan problemas en su matrimonio, no aparten a Jehová de su vida" placeholder="Título parte 7" required>
+                                <input type="text" id="life-7-participants" value="NOMBRE" placeholder="Participantes parte 7" required>
+                                <input type="text" id="life-7-duration" value="4 mins." placeholder="Duración parte 7" required>
+                                
+                                <input type="text" id="life-8-title" value="Estudio bíblico de congregación" placeholder="Título parte 8" required>
+                                <input type="text" id="life-8-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 8" required>
+                                <input type="text" id="life-8-duration" value="30 mins." placeholder="Duración parte 8" required>
+                            </div>
+                        </div>
+                        <!--
+                         TÍTULOS Y DETALLES COMPLETOS 
+                        <div class="form-section">
+                            <h3>Títulos, Participantes y Duración</h3>
+                            
+                             TESOROS DE LA BIBLIA 
+                            <div class="form-group">
+                                <label>Tesoros de la Biblia</label>
+                                <input type="text" id="treasure-1-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 1" required>
+                                <input type="text" id="treasure-2-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 2" required>
+                                <input type="text" id="treasure-3-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 3" required>
+                            </div>
+                            
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="treasure-1-duration">Duración Tesoros:</label>
+                                    <label for="treasure-1-duration">Duración Tesoros 1:</label>
                                     <input type="text" id="treasure-1-duration" value="10 mins." required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="life-8-duration">Duración Estudio Bíblico:</label>
+                                    <label for="treasure-2-duration">Duración Tesoros 2:</label>
+                                    <input type="text" id="treasure-2-duration" value="10 mins." required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="treasure-3-duration">Duración Tesoros 3:</label>
+                                    <input type="text" id="treasure-3-duration" value="4 mins." required>
+                                </div>
+                            </div>
+                            
+                             SEAMOS MEJORES MAESTROS 
+                            <div class="form-group">
+                                <label>Mejores Maestros - Participantes:</label>
+                                <input type="text" id="masters-1-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 1" required>
+                                <input type="text" id="masters-2-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 2" required>
+                                <input type="text" id="masters-3-participants" value="NOMBRE" placeholder="Participantes parte 3" required>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="masters-1-duration">Duración Maestros 1:</label>
+                                    <input type="text" id="masters-1-duration" value="4 mins." required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="masters-2-duration">Duración Maestros 2:</label>
+                                    <input type="text" id="masters-2-duration" value="4 mins." required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="masters-3-duration">Duración Maestros 3:</label>
+                                    <input type="text" id="masters-3-duration" value="4 mins." required>
+                                </div>
+                            </div>
+                            
+                             NUESTRA VIDA CRISTIANA 
+                            <div class="form-group">
+                                <label>Vida Cristiana - Participantes:</label>
+                                <input type="text" id="life-7-participants" value="NOMBRE" placeholder="Participantes parte 7" required>
+                                <input type="text" id="life-8-participants" value="NOMBRE / NOMBRE" placeholder="Participantes parte 8" required>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="life-7-duration">Duración Vida 7:</label>
+                                    <input type="text" id="life-7-duration" value="4 mins." required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="life-8-duration">Duración Vida 8:</label>
                                     <input type="text" id="life-8-duration" value="30 mins." required>
                                 </div>
                             </div>
                         </div>
--->
-                        <!-- TÍTULOS PRINCIPALES -->
+                         TÍTULOS PRINCIPALES 
                         <div class="form-section">
                             <div class="form-group">
                                 <label for="masters-1-title">Seamos Mejores Maestros:</label>
-                                <input type="text" id="masters-1-title" value="Empiece Conversaciones" required>
-                            </div>
-                            <div class="form-group">
-                                <input type="text" id="treasure-2-title" value="Haga Revisitas" required>
-                            </div>
-                            <div class="form-group">
-                                <input type="text" id="treasure-3-title" value="Discurso" required>
-                            </div>                                                        
+                                <input type="text" id="masters-1-title" value="EMPIECE CONVERSACIONES" placeholder="Primera parte" required>
+                                <input type="text" id="masters-2-title" value="HAGA REVISITAS" placeholder="Segunda parte" required>
+                                <input type="text" id="masters-3-title" value="DISCURSO" placeholder="Tercera parte" required>
+                            </div>                                                     
                             <div class="form-group">
                                 <label for="treasure-1-title">Tesoros de la Biblia:</label>
                                 <input type="text" id="treasure-1-title" value="Fortalezcan su cuerda triple" required>
@@ -172,7 +269,7 @@
                                 <label for="life-7-title">Nuestra Vida Cristiana:</label>
                                 <input type="text" id="life-7-title" value="Cuando tengan problemas en su matrimonio, no aparten a Jehová de su vida" required>
                             </div>
-                        </div>
+                        </div>-->
 
                         <!-- El textarea JSON original lo mantenemos por ahora -->
                         <div class="form-group">
@@ -193,7 +290,7 @@
 
     <footer class="main-footer">
         <div class="container">
-            <p>Cartelera de Reuniones &copy; 2025 - Congregación Las Colonias</p>
+            <p>Cartelera de Reuniones &#127755; 2025 - Congregación Las Colonias</p>
         </div>
     </footer>
 

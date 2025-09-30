@@ -428,15 +428,41 @@ function handleMeetingSubmit(e) {
     const openingPrayer = document.getElementById('meeting-opening-prayer').value;
     const closingPrayer = document.getElementById('meeting-closing-prayer').value;
     
-    // Obtener los nuevos valores
+    // Obtener los nuevos valores Completos
     const songOpening = parseInt(document.getElementById('song-opening').value);
     const songMiddle = parseInt(document.getElementById('song-middle').value);
     const songClosing = parseInt(document.getElementById('song-closing').value);
-    //const treasure1Duration = document.getElementById('treasure-1-duration').value;
-    //const life8Duration = document.getElementById('life-8-duration').value;
+
+    // TESOROS
     const treasure1Title = document.getElementById('treasure-1-title').value;
-    const life7Title = document.getElementById('life-7-title').value;
+    const treasure2Title = document.getElementById('treasure-2-title').value;
+    const treasure3Title = document.getElementById('treasure-3-title').value;
+    const treasure1Participants = document.getElementById('treasure-1-participants').value;
+    const treasure2Participants = document.getElementById('treasure-2-participants').value;
+    const treasure3Participants = document.getElementById('treasure-3-participants').value;
+    const treasure1Duration = document.getElementById('treasure-1-duration').value;
+    const treasure2Duration = document.getElementById('treasure-2-duration').value;
+    const treasure3Duration = document.getElementById('treasure-3-duration').value; 
+
+    // MAESTROS
+    const masters1Title = document.getElementById('masters-1-title').value;
+    const masters2Title = document.getElementById('masters-2-title').value;
+    const masters3Title = document.getElementById('masters-3-title').value;
+    const masters1Participants = document.getElementById('masters-1-participants').value;
+    const masters2Participants = document.getElementById('masters-2-participants').value;
+    const masters3Participants = document.getElementById('masters-3-participants').value;
+    const masters1Duration = document.getElementById('masters-1-duration').value;
+    const masters2Duration = document.getElementById('masters-2-duration').value;
+    const masters3Duration = document.getElementById('masters-3-duration').value;    
     
+    // VIDA CRISTIANA
+    const life7Title = document.getElementById('life-7-title').value;
+    const life8Title = document.getElementById('life-8-title').value;
+    const life7Participants = document.getElementById('life-7-participants').value;
+    const life8Participants = document.getElementById('life-8-participants').value;
+    const life7Duration = document.getElementById('life-7-duration').value;
+    const life8Duration = document.getElementById('life-8-duration').value;
+
     let content;
     try {
         content = JSON.parse(document.getElementById('meeting-content-json').value);
@@ -444,7 +470,18 @@ function handleMeetingSubmit(e) {
         // Actualizar los valores en el contenido
         content = updateContentWithFormValues(content, {
             songOpening, songMiddle, songClosing,
-            treasure1Title, life7Title
+            // TESOROS
+            treasure1Title, treasure2Title, treasure3Title,
+            treasure1Participants, treasure2Participants, treasure3Participants,
+            treasure1Duration, treasure2Duration, treasure3Duration,
+            // MAESTROS
+            masters1Title, masters2Title, masters3Title,
+            masters1Participants, masters2Participants, masters3Participants,
+            masters1Duration, masters2Duration, masters3Duration,
+            // VIDA CRISTIANA
+            life7Title, life8Title,
+            life7Participants, life8Participants,
+            life7Duration, life8Duration
         });
         
     } catch (error) {
@@ -533,11 +570,37 @@ function extractMeetingDetails(content) {
     let songOpening = 93;
     let songMiddle = 131;
     let songClosing = 51;
-    let treasure1Duration = "10 mins.";
-    let life8Duration = "30 mins.";
+
+    // Valores por defecto para TESOROS
     let treasure1Title = "Fortalezcan su cuerda triple";
+    let treasure2Title = "Busquemos perlas escondidas";
+    let treasure3Title = "Lectura de la Biblia";
+    let treasure1Participants = "NOMBRE / NOMBRE";
+    let treasure2Participants = "NOMBRE / NOMBRE";
+    let treasure3Participants = "NOMBRE / NOMBRE";
+    let treasure1Duration = "10 mins.";
+    let treasure2Duration = "10 mins.";
+    let treasure3Duration = "4 mins.";
+
+    // Valores por defecto para MAESTROS
+    let masters1Title = "DE CASA EN CASA";
+    let masters2Title = "PREDICACIÓN INFORMAL";
+    let masters3Title = "DISCURSO";
+    let masters1Participants = "NOMBRE / NOMBRE";
+    let masters2Participants = "NOMBRE / NOMBRE";
+    let masters3Participants = "NOMBRE";
+    let masters1Duration = "4 mins.";
+    let masters2Duration = "4 mins.";
+    let masters3Duration = "4 mins.";
+
+    // Valores por defecto para VIDA CRISTIANA
     let life7Title = "Cuando tengan problemas en su matrimonio, no aparten a Jehová de su vida";
-    
+    let life8Title = "Estudio bíblico de congregación";
+    let life7Participants = "NOMBRE";
+    let life8Participants = "NOMBRE / NOMBRE";
+    let life7Duration = "4 mins.";
+    let life8Duration = "30 mins.";
+
     // Extraer valores del contenido
     content.forEach(item => {
         if (item.type === "song") {
@@ -546,23 +609,92 @@ function extractMeetingDetails(content) {
             else if (content.indexOf(item) === 7) songClosing = item.number;
         }
         else if (item.type === "section" && item.title.includes("TESOROS")) {
+            // Extraer los 3 ítems de TESOROS
             if (item.items[0]) {
                 treasure1Title = item.items[0].title;
+                treasure1Participants = item.items[0].participants || "NOMBRE / NOMBRE";
+                treasure1Duration = item.items[0].duration || "10 mins.";
+            }
+            if (item.items[1]) {
+                treasure2Title = item.items[1].title;
+                treasure2Participants = item.items[1].participants || "NOMBRE / NOMBRE";
+                treasure2Duration = item.items[1].duration || "10 mins.";
+            }
+            if (item.items[2]) {
+                treasure3Title = item.items[2].title;
+                treasure3Participants = item.items[2].participants || "NOMBRE / NOMBRE";
+                treasure3Duration = item.items[2].duration || "4 mins.";
+            }    
+        }
+         else if (item.type === "section" && item.title.includes("MAESTROS")) {
+            // Extraer los 3 ítems de MAESTROS
+            if (item.items[0]) {
+                masters1Title = item.items[0].title;
+                masters1Participants = item.items[0].participants || "NOMBRE / NOMBRE";
+                masters1Duration = item.items[0].duration || "4 mins.";
+            }
+            if (item.items[1]) {
+                masters2Title = item.items[1].title;
+                masters2Participants = item.items[1].participants || "NOMBRE / NOMBRE";
+                masters2Duration = item.items[1].duration || "4 mins.";
+            }
+            if (item.items[2]) {
+                masters3Title = item.items[2].title;
+                masters3Participants = item.items[2].participants || "NOMBRE";
+                masters3Duration = item.items[2].duration || "4 mins.";
             }
         }
         else if (item.type === "section" && item.title.includes("VIDA")) {
-            if (item.items[0]) life7Title = item.items[0].title;
-        }
+            // Extraer los 2 ítems de VIDA CRISTIANA
+            if (item.items[0]) {
+                life7Title = item.items[0].title;
+                life7Participants = item.items[0].participants || "NOMBRE";
+                life7Duration = item.items[0].duration || "4 mins.";
+            }
+            if (item.items[1]) {
+                life8Title = item.items[1].title;
+                life8Participants = item.items[1].participants || "NOMBRE / NOMBRE";
+                life8Duration = item.items[1].duration || "30 mins.";
+            }
+        }                        
     });
     
-    // Llenar los campos
+    // Llenar los campos del formulario - TÍTULOS
     document.getElementById('song-opening').value = songOpening;
     document.getElementById('song-middle').value = songMiddle;
     document.getElementById('song-closing').value = songClosing;
-    document.getElementById('treasure-1-title').value = treasure1Title;
-    document.getElementById('life-7-title').value = life7Title;
-}
 
+    // TESOROS
+    document.getElementById('treasure-1-title').value = treasure1Title;
+    document.getElementById('treasure-2-title').value = treasure2Title;
+    document.getElementById('treasure-3-title').value = treasure3Title;
+    document.getElementById('treasure-1-participants').value = treasure1Participants;
+    document.getElementById('treasure-2-participants').value = treasure2Participants;
+    document.getElementById('treasure-3-participants').value = treasure3Participants;
+    document.getElementById('treasure-1-duration').value = treasure1Duration;
+    document.getElementById('treasure-2-duration').value = treasure2Duration;
+    document.getElementById('treasure-3-duration').value = treasure3Duration;
+
+    // MAESTROS
+    document.getElementById('masters-1-title').value = masters1Title;
+    document.getElementById('masters-2-title').value = masters2Title;
+    document.getElementById('masters-3-title').value = masters3Title;
+    document.getElementById('masters-1-participants').value = masters1Participants;
+    document.getElementById('masters-2-participants').value = masters2Participants;
+    document.getElementById('masters-3-participants').value = masters3Participants;
+    document.getElementById('masters-1-duration').value = masters1Duration;
+    document.getElementById('masters-2-duration').value = masters2Duration;
+    document.getElementById('masters-3-duration').value = masters3Duration;
+
+    // VIDA CRISTIANA
+    document.getElementById('life-7-title').value = life7Title;
+    document.getElementById('life-8-title').value = life8Title;
+    document.getElementById('life-7-participants').value = life7Participants;
+    document.getElementById('life-8-participants').value = life8Participants;
+    document.getElementById('life-7-duration').value = life7Duration;
+    document.getElementById('life-8-duration').value = life8Duration;
+}
+/*
 function updateContentWithFormValues(content, values) {
     let songCount = 0;
     
@@ -598,7 +730,111 @@ function updateContentWithFormValues(content, values) {
                 })
             };
         }
+        else if (item.type === "section" && item.title.includes("MAESTROS")) {
+            return {
+                ...item,
+                items: item.items.map((sectionItem, index) => {
+                    if (index === 0 && values.masters1Title) {
+                        return { ...sectionItem, title: values.masters1Title };
+                    }
+                    else if (index === 1 && values.masters2Title) {
+                        return { ...sectionItem, title: values.masters2Title };
+                    }
+                    else if (index === 2 && values.masters3Title) {
+                        return { ...sectionItem, title: values.masters3Title };
+                    }
+                    return sectionItem;
+                })
+            };
+        }    
         return item;
-    });
+    });*/
+
+//Nueva versión de la función
+function updateContentWithFormValues(content, values) {
+    let songCount = 0;
+    
+    return content.map(item => {
+        if (item.type === "song") {
+            songCount++;
+            if (songCount === 1) return { ...item, number: values.songOpening };
+            if (songCount === 2) return { ...item, number: values.songMiddle };
+            if (songCount === 3) return { ...item, number: values.songClosing };
+        }
+        else if (item.type === "section" && item.title.includes("TESOROS")) {
+            return {
+                ...item,
+                items: item.items.map((sectionItem, index) => {
+                    const updatedItem = { ...sectionItem };
+                    
+                    if (index === 0) {
+                        if (values.treasure1Title) updatedItem.title = values.treasure1Title;
+                        if (values.treasure1Participants) updatedItem.participants = values.treasure1Participants;
+                        if (values.treasure1Duration) updatedItem.duration = values.treasure1Duration;
+                    }
+                    else if (index === 1) {
+                        if (values.treasure2Title) updatedItem.title = values.treasure2Title;
+                        if (values.treasure2Participants) updatedItem.participants = values.treasure2Participants;
+                        if (values.treasure2Duration) updatedItem.duration = values.treasure2Duration;
+                    }
+                    else if (index === 2) {
+                        if (values.treasure3Title) updatedItem.title = values.treasure3Title;
+                        if (values.treasure3Participants) updatedItem.participants = values.treasure3Participants;
+                        if (values.treasure3Duration) updatedItem.duration = values.treasure3Duration;
+                    }
+                    
+                    return updatedItem;
+                })
+            };
+        }
+        else if (item.type === "section" && item.title.includes("MAESTROS")) {
+            return {
+                ...item,
+                items: item.items.map((sectionItem, index) => {
+                    const updatedItem = { ...sectionItem };
+                    
+                    if (index === 0) {
+                        if (values.masters1Title) updatedItem.title = values.masters1Title;
+                        if (values.masters1Participants) updatedItem.participants = values.masters1Participants;
+                        if (values.masters1Duration) updatedItem.duration = values.masters1Duration;
+                    }
+                    else if (index === 1) {
+                        if (values.masters2Title) updatedItem.title = values.masters2Title;
+                        if (values.masters2Participants) updatedItem.participants = values.masters2Participants;
+                        if (values.masters2Duration) updatedItem.duration = values.masters2Duration;
+                    }
+                    else if (index === 2) {
+                        if (values.masters3Title) updatedItem.title = values.masters3Title;
+                        if (values.masters3Participants) updatedItem.participants = values.masters3Participants;
+                        if (values.masters3Duration) updatedItem.duration = values.masters3Duration;
+                    }
+                    
+                    return updatedItem;
+                })
+            };
+        }
+        else if (item.type === "section" && item.title.includes("VIDA")) {
+            return {
+                ...item,
+                items: item.items.map((sectionItem, index) => {
+                    const updatedItem = { ...sectionItem };
+                    
+                    if (index === 0) {
+                        if (values.life7Title) updatedItem.title = values.life7Title;
+                        if (values.life7Participants) updatedItem.participants = values.life7Participants;
+                        if (values.life7Duration) updatedItem.duration = values.life7Duration;
+                    }
+                    else if (index === 1) {
+                        if (values.life8Title) updatedItem.title = values.life8Title;
+                        if (values.life8Participants) updatedItem.participants = values.life8Participants;
+                        if (values.life8Duration) updatedItem.duration = values.life8Duration;
+                    }
+                    
+                    return updatedItem;
+                })
+            };
+        }
+        return item;
+    });    
 }
 // ========== FIN DE NUEVAS FUNCIONES ==========
