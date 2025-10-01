@@ -2,7 +2,7 @@
   "name": "Programa Vida Ministerio",
   "short_name": "VidaMinisterio",
   "description": "Cartelera de reuniones - Congregación Las Colonias",
-  "start_url": "/",
+  "start_url": "https://vida-ministerio-v3.vercel.app",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#BE8900",
