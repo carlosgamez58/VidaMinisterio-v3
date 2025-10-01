@@ -1,0 +1,31 @@
+{
+  "name": "Programa Vida Ministerio",
+  "short_name": "VidaMinisterio",
+  "description": "Cartelera de reuniones - Congregación Las Colonias",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#BE8900",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512x512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
