@@ -1,40 +1,26 @@
 {
   "name": "Programa Vida Ministerio",
-  "short_name": "VidaMinisterio",
+  "short_name": "JW",
   "description": "Cartelera de reuniones - Congregación Las Colonias",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#BE8900",
+  "theme_color": "#ffe6e6",
   "orientation": "portrait",
   "scope": "/",
   "categories": ["productivity", "education"],
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%23267479'/><text x='50%' y='55%' font-family='Arial' font-size='80' text-anchor='middle' fill='white'>⛪</text></svg>",
+      "src": "/images/logo_192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23237a8d'/><text x='50%' y='55%' font-family='Arial' font-size='200' text-anchor='middle' fill='white'>⛪</text></svg>",
-      "sizes": "512x512", 
-      "type": "image/svg+xml",
+      "src": "/images/logo_512.png",
+      "sizes": "512x512",
+      "type": "image/png", 
       "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1280' height='720' viewBox='0 0 1280 720'><rect width='1280' height='720' fill='%23f5f8fa'/><rect x='100' y='80' width='1080' height='100' fill='%232c3e50'/><rect x='100' y='220' width='1080' height='400' fill='white' stroke='%23e1e8ed' stroke-width='2'/><text x='640' y='150' font-family='Arial' font-size='32' text-anchor='middle' fill='white'>Programa Vida Ministerio</text><text x='640' y='350' font-family='Arial' font-size='24' text-anchor='middle' fill='%23333'>Cartelera de Reuniones</text></svg>",
-      "sizes": "1280x720",
-      "type": "image/svg+xml",
-      "form_factor": "wide"
-    },
-    {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='375' height='812' viewBox='0 0 375 812'><rect width='375' height='812' fill='%23f5f8fa'/><rect x='20' y='40' width='335' height='80' fill='%232c3e50'/><rect x='20' y='150' width='335' height='500' fill='white' stroke='%23e1e8ed' stroke-width='2'/><text x='187.5' y='85' font-family='Arial' font-size='20' text-anchor='middle' fill='white'>VidaMinisterio</text><text x='187.5' y='400' font-family='Arial' font-size='16' text-anchor='middle' fill='%23333'>Reuniones</text></svg>",
-      "sizes": "375x812",
-      "type": "image/svg+xml",
-      "form_factor": "narrow"
     }
   ]
 }
