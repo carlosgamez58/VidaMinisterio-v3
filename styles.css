@@ -767,3 +767,69 @@ body {
     overflow-y: auto;
     resize: vertical;
 }
+
+/* ========== SELECTOR DE MES ========== */
+
+/* Selector de mes */
+.month-selector-container {
+    background: #34495e;
+    padding: 20px 0;
+    border-bottom: 3px solid #2c3e50;
+}
+
+.month-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.month-selector label {
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.month-selector select {
+    padding: 12px 15px;
+    border: 2px solid #3498db;
+    border-radius: 6px;
+    font-size: 1rem;
+    background: white;
+    color: #2c3e50;
+    min-width: 180px;
+}
+
+.month-selector select:focus {
+    outline: none;
+    border-color: #2980b9;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+}
+
+/* Responsive para el selector de mes */
+@media (max-width: 768px) {
+    .month-selector {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .month-selector label {
+        margin-bottom: 10px;
+    }
+    
+    .month-selector select {
+        width: 100%;
+        max-width: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .month-selector-container {
+        padding: 15px 0;
+    }
+    
+    .month-selector select {
+        font-size: 16px; /* Previene zoom en iOS */
+    }
+}

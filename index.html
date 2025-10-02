@@ -18,14 +18,59 @@
     <header class="main-header">
         <div class="container">
             <h1>Programa Vida Ministerio</h1>
-            <h2>Las Colonias &#127755; octubre 2025</h2>
+            <h2 id="current-month-display">Las Colonias &#127755; octubre 2025</h2>
             <button id="admin-access-btn" class="admin-btn">
                 <i class="admin-icon">⚙️</i> Acceso Administrativo
             </button>
         </div>
     </header>
+    <!-- Header principal -->
+    <!--<header class="main-header">
+        <div class="container">
+            <h1>Programa Vida Ministerio</h1>
+            <h2>Las Colonias &#127755; octubre 2025</h2>
+            <button id="admin-access-btn" class="admin-btn">
+                <i class="admin-icon">⚙️</i> Acceso Administrativo
+            </button>
+        </div>
+    </header>-->
+    <!-- Selector de mes - NUEVA SECCIÓN -->
+    <div class="month-selector-container">
+        <div class="container">
+            <div class="month-selector">
+                <label for="month-select">Seleccionar Mes:</label>
+                <select id="month-select">
+                    <option value="2025-01">Enero 2025</option>
+                    <option value="2025-02">Febrero 2025</option>
+                    <option value="2025-03">Marzo 2025</option>
+                    <option value="2025-04">Abril 2025</option>
+                    <option value="2025-05">Mayo 2025</option>
+                    <option value="2025-06">Junio 2025</option>
+                    <option value="2025-07">Julio 2025</option>
+                    <option value="2025-08">Agosto 2025</option>
+                    <option value="2025-09">Septiembre 2025</option>
+                    <option value="2025-10" selected>Octubre 2025</option>
+                    <option value="2025-11">Noviembre 2025</option>
+                    <option value="2025-12">Diciembre 2025</option>
+                </select>
+            </div>
+        </div>
+    </div>
 
     <!-- Contenido principal público -->
+    <main class="public-content">
+        <div class="container">
+            <div class="navigation">
+                <!-- La navegación se generará dinámicamente -->
+            </div>
+            
+            <div id="meeting-content">
+                <!-- El contenido de la reunión se cargará aquí dinámicamente -->
+            </div>
+        </div>
+    </main>
+    
+    <!-- Contenido principal público 
     <main class="public-content">
         <div class="container">
             <div class="navigation">
@@ -37,10 +82,10 @@
             </div>
             
             <div id="meeting-content">
-                <!-- El contenido de la reunión se cargará aquí dinámicamente -->
+                 El contenido de la reunión se cargará aquí dinámicamente 
             </div>
         </div>
-    </main>
+    </main>-->
 
     <!-- Modal de login para administración -->
     <div id="login-modal" class="modal">
@@ -68,6 +113,7 @@
             <div class="admin-header">
                 <h2>Mantenedor de Reuniones</h2>
                 <div class="admin-buttons">
+                    <button id="generate-month-btn" class="btn-primary">Generar Plantillas</button>
                     <button id="back-to-public" class="btn-secondary">Volver a la Cartelera</button>
                     <button id="logout-btn" class="btn-logout">Cerrar Sesión</button>
                 </div>

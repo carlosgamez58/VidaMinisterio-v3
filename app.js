@@ -62,21 +62,23 @@ const exportDataBtn = document.getElementById('export-data-btn');
 
 // Variables globales
 let currentEditKey = null;
+let currentMonth = '2025-10'; // Mes actual por defecto
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', function() {
-    // Cargar la primera reunión por defecto
-    renderMeeting('octubre-2');
+    // Inicializar selector de mes primero
+    initializeMonthSelector();
+    updateMonthDisplay();
+    updateNavigation();
     
-    // Event listeners para navegación pública
-    document.querySelectorAll('.nav-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            const sectionId = this.getAttribute('data-section');
-            renderMeeting(sectionId);
-        });
-    });
+    // Cargar la primera reunión disponible
+    const firstMeeting = Object.keys(meetingsData)
+        .filter(key => meetingsData[key].date.startsWith(currentMonth))
+        .sort((a, b) => new Date(meetingsData[a].date) - new Date(meetingsData[b].date))[0];
+    
+    if (firstMeeting) {
+        renderMeeting(firstMeeting);
+    }
     
     // Event listeners para administración
     adminAccessBtn.addEventListener('click', showLoginModal);
@@ -87,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
     exportDataBtn.addEventListener('click', exportData);
     meetingForm.addEventListener('submit', handleMeetingSubmit);
 
-    // Event listeners para cerrar modales - NUEVA VERSIÓN CORREGIDA
+    // Event listeners para cerrar modales
     document.querySelector('.close').addEventListener('click', function() {
         loginModal.style.display = 'none';
     });
@@ -103,27 +105,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('cancel-btn').addEventListener('click', function() {
         meetingModal.style.display = 'none';
     });
-    /*
-    // Cerrar modales
-    document.querySelectorAll('.close, .close-meeting, #login-cancel, #cancel-btn').forEach(btn => 
-        {
-        btn.addEventListener('click', function() {
-            loginModal.style.display = 'none';
-            meetingModal.style.display = 'none';
-        });
-    });
-    */
- /*   
-    // Cerrar modal al hacer clic fuera
-    window.addEventListener('click', function(event) {
-        if (event.target === loginModal) {
-            loginModal.style.display = 'none';
-        }
-        if (event.target === meetingModal) {
-            meetingModal.style.display = 'none';
-        }
-    });
-});*/
 
     // Cerrar modal al hacer clic fuera
     window.addEventListener('click', function(event) {
@@ -133,6 +114,196 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// ========== FUNCIONES PARA GENERACIÓN DE PLANTILLAS POR MES ==========
+
+function initializeMonthSelector() {
+    const monthSelect = document.getElementById('month-select');
+    const generateBtn = document.getElementById('generate-month-btn');
+    
+    if (monthSelect) {
+        monthSelect.addEventListener('change', function() {
+            currentMonth = this.value;
+            updateMonthDisplay();
+            updateNavigation();
+            // ACTUALIZAR TAMBIÉN EL MANTENEDOR SI ESTÁ VISIBLE
+            if (adminPanel.style.display === 'block') {
+                renderAdminMeetings();
+            }
+        });
+    }
+    
+    if (generateBtn) {
+        generateBtn.addEventListener('click', generateMonthTemplates);
+    }
+}
+
+function generateMonthTemplates() {
+    if (!confirm(`¿Generar plantillas para ${getMonthName(currentMonth)}? Esto creará reuniones para todos los jueves del mes.`)) {
+        return;
+    }
+    
+    const [year, month] = currentMonth.split('-').map(Number);
+    const weeks = getWeeksInMonth(year, month);
+    
+    let generatedCount = 0;
+    
+    weeks.forEach((week, index) => {
+        // Usar la fecha como clave (ej: "2025-10-02") en lugar de "semana-1-10-2025"
+        const weekKey = week.start; // Esto será algo como "2025-10-02"
+        const meetingDate = week.start;
+        
+        if (!meetingsData[weekKey]) {
+            meetingsData[weekKey] = createMeetingTemplate(meetingDate, index + 1);
+            generatedCount++;
+        }
+    });
+    
+    // Guardar cambios
+    localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
+    
+    // Actualizar navegación y vista
+    updateNavigation();
+    renderAdminMeetings();
+    
+    alert(`Se generaron ${generatedCount} nuevas plantillas para los jueves de ${getMonthName(currentMonth)}`);
+}
+
+function getWeeksInMonth(year, month) {
+    const weeks = [];
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+    
+    let currentDate = new Date(firstDay);
+    
+    // Ajustar al primer JUEVES (día de reunión)
+    while (currentDate.getDay() !== 4) { // 4 = jueves (0=domingo, 1=lunes, 2=martes, 3=miércoles, 4=jueves)
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Generar solo los jueves del mes (una reunión por semana)
+    while (currentDate <= lastDay) {
+        const weekStart = new Date(currentDate);
+        weeks.push({
+            start: formatDateForInput(weekStart),
+            number: weeks.length + 1
+        });
+        
+        // Siguiente jueves (7 días después)
+        currentDate.setDate(currentDate.getDate() + 7);
+    }
+    
+    return weeks;
+}
+
+function createMeetingTemplate(date, weekNumber) {
+    const [year, month, day] = date.split('-');
+    const monthName = getMonthName(currentMonth);
+    
+    // Crear una clave más legible (ej: "2025-10-02" en lugar de "semana-1-10-2025")
+    // Esto hará que sea más fácil identificar las reuniones
+    
+    return {
+        date: date,
+        bibleReference: "LECTURA BÍBLICA SEMANAL",
+        president: "NOMBRE",
+        openingPrayer: "NOMBRE",
+        closingPrayer: "NOMBRE",
+        content: [
+            { type: "song", number: 93 },
+            { type: "intro", duration: "1 min." },
+            { 
+                type: "section", 
+                title: "TESOROS DE LA BIBLIA", 
+                items: [
+                    { number: 1, title: "Fortalezcan su cuerda triple", duration: "10 mins.", participants: "NOMBRE / NOMBRE" },
+                    { number: 2, title: "Busquemos perlas escondidas", duration: "10 mins.", participants: "NOMBRE / NOMBRE" },
+                    { number: 3, title: "Lectura de la Biblia", duration: "4 mins.", participants: "NOMBRE / NOMBRE" }
+                ]
+            },
+            { 
+                type: "section", 
+                title: "SEAMOS MEJORES MAESTROS", 
+                items: [
+                    { number: 4, title: "De casa en casa", duration: "4 mins.", participants: "NOMBRE / NOMBRE" },
+                    { number: 5, title: "Predicación Informal", duration: "4 mins.", participants: "NOMBRE / NOMBRE" },
+                    { number: 6, title: "Discurso", duration: "4 mins.", participants: "NOMBRE" }
+                ]
+            },
+            { type: "song", number: 131 },
+            { 
+                type: "section", 
+                title: "NUESTRA VIDA CRISTIANA", 
+                items: [
+                    { number: 7, title: "Cuando tengan problemas en su matrimonio, no aparten a Jehová de su vida", duration: "4 mins.", participants: "NOMBRE" },
+                    { number: 8, title: "Estudio bíblico de congregación", duration: "30 mins.", participants: "NOMBRE / NOMBRE", conductor: true }
+                ]
+            },
+            { type: "conclusion", duration: "3 mins." },
+            { type: "song", number: 51 }
+        ]
+    };
+}
+
+function updateNavigation() {
+    const navigation = document.querySelector('.navigation');
+    if (!navigation) return;
+    
+    // Limpiar navegación existente
+    navigation.innerHTML = '';
+    
+    // Obtener reuniones del mes actual
+    const monthMeetings = Object.keys(meetingsData)
+        .filter(key => {
+            const meetingDate = meetingsData[key].date;
+            return meetingDate.startsWith(currentMonth);
+        })
+        .sort((a, b) => new Date(meetingsData[a].date) - new Date(meetingsData[b].date));
+    
+    // Crear botones de navegación
+    monthMeetings.forEach((key, index) => {
+        const meeting = meetingsData[key];
+        const button = document.createElement('button');
+        button.className = `nav-btn ${index === 0 ? 'active' : ''}`;
+        button.setAttribute('data-section', key);
+        button.textContent = formatDisplayDate(meeting.date);
+        
+        button.addEventListener('click', function() {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            renderMeeting(key);
+        });
+        
+        navigation.appendChild(button);
+    });
+    
+    // Si no hay reuniones, mostrar mensaje
+    if (monthMeetings.length === 0) {
+        navigation.innerHTML = '<div class="empty-state"><p>No hay reuniones programadas para este mes</p></div>';
+    }
+}
+
+function getMonthName(monthString) {
+    const [year, month] = monthString.split('-');
+    const date = new Date(year, month - 1, 1);
+    return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+}
+
+function formatDateForInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function updateMonthDisplay() {
+    const monthDisplay = document.getElementById('current-month-display');
+    if (monthDisplay) {
+        monthDisplay.textContent = `Las Colonias \u{1F30B} ${getMonthName(currentMonth)}`;
+    }
+}
+
+// ========== FUNCIONES EXISTENTES (MANTENER) ==========
 
 // Función para renderizar reunión pública
 function renderMeeting(sectionId) {
@@ -253,24 +424,43 @@ function showAdminView() {
     adminPanel.style.display = 'block'; 
     // Ocultar el botón de acceso administrativo
     adminAccessBtn.style.display = 'none';
+    // Asegurar que se muestren las reuniones del mes actual
     renderAdminMeetings();
 }
 
 function showPublicView() {
-    publicContent.style.display = 'block';// Solo esta línea para mostrar contenido público
+    publicContent.style.display = 'block';
     adminPanel.style.display = 'none';
-    // Asegurar que el botón admin sea visible
-    adminAccessBtn.style.display = 'block'; // ← AGREGAR ESTA LÍNEA
-    adminAccessBtn.style.margin = '20px auto 0 auto'; // Centrar el botón
+    adminAccessBtn.style.display = 'block';
+    adminAccessBtn.style.margin = '20px auto 0 auto';
+    
+    // Actualizar navegación al volver a vista pública
+    updateNavigation();
+    updateMonthDisplay();
+    
     // Recargar la reunión actual
     const activeBtn = document.querySelector('.nav-btn.active');
     if (activeBtn) {
         renderMeeting(activeBtn.getAttribute('data-section'));
+    } else {
+        // Si no hay reunión activa, cargar la primera disponible del mes actual
+        const firstMeeting = Object.keys(meetingsData)
+            .filter(key => meetingsData[key].date.startsWith(currentMonth))
+            .sort((a, b) => new Date(meetingsData[a].date) - new Date(meetingsData[b].date))[0];
+        
+        if (firstMeeting) {
+            renderMeeting(firstMeeting);
+            // Activar el botón correspondiente
+            const correspondingBtn = document.querySelector(`.nav-btn[data-section="${firstMeeting}"]`);
+            if (correspondingBtn) {
+                correspondingBtn.classList.add('active');
+            }
+        }
     }
 }
 
 function handleLogout() {
-        if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
         showPublicView();
         // Opcional: Resetear formularios
         loginForm.reset();
@@ -281,17 +471,25 @@ function handleLogout() {
 function renderAdminMeetings() {
     meetingsContainer.innerHTML = '';
     
-    if (Object.keys(meetingsData).length === 0) {
+    // Filtrar reuniones solo del mes actual
+    const currentMonthMeetings = Object.keys(meetingsData)
+        .filter(key => {
+            const meetingDate = meetingsData[key].date;
+            return meetingDate.startsWith(currentMonth);
+        })
+        .sort((a, b) => new Date(meetingsData[a].date) - new Date(meetingsData[b].date));
+
+    if (currentMonthMeetings.length === 0) {
         meetingsContainer.innerHTML = `
             <div class="empty-state">
-                <h3>No hay reuniones programadas</h3>
-                <p>Haz clic en "Agregar Nueva Reunión" para crear la primera.</p>
+                <h3>No hay reuniones programadas para ${getMonthName(currentMonth)}</h3>
+                <p>Haz clic en "Agregar Nueva Reunión" o "Generar Plantillas" para crear reuniones.</p>
             </div>
         `;
         return;
     }
     
-    Object.keys(meetingsData).forEach(key => {
+    currentMonthMeetings.forEach(key => {
         const meeting = meetingsData[key];
         const meetingElement = document.createElement('div');
         meetingElement.className = 'meeting-card';
@@ -332,25 +530,7 @@ function openAddModal() {
     currentEditKey = null;
     meetingModal.style.display = 'block';
 }
-/*
-function openEditModal(key) {
-    const meeting = meetingsData[key];
-    if (!meeting) return;
-    
-    document.getElementById('modal-title').textContent = 'Editar Reunión';
-    document.getElementById('meeting-date').value = meeting.date;
-    document.getElementById('meeting-key').value = key;
-    document.getElementById('meeting-bible').value = meeting.bibleReference;
-    document.getElementById('meeting-president').value = meeting.president;
-    document.getElementById('meeting-opening-prayer').value = meeting.openingPrayer;
-    document.getElementById('meeting-closing-prayer').value = meeting.closingPrayer;
-    document.getElementById('meeting-content-json').value = JSON.stringify(meeting.content, null, 2);
-    
-    currentEditKey = key;
-    meetingModal.style.display = 'block';
-}
-*/
-// CON ESTA NUEVA VERSIÓN:
+
 function openEditModal(key) {
     const meeting = meetingsData[key];
     if (!meeting) return;
@@ -370,53 +550,6 @@ function openEditModal(key) {
     currentEditKey = key;
     meetingModal.style.display = 'block';
 }
-/*
-function handleMeetingSubmit(e) {
-    e.preventDefault();
-    
-    const date = document.getElementById('meeting-date').value;
-    const key = document.getElementById('meeting-key').value;
-    const bibleReference = document.getElementById('meeting-bible').value;
-    const president = document.getElementById('meeting-president').value;
-    const openingPrayer = document.getElementById('meeting-opening-prayer').value;
-    const closingPrayer = document.getElementById('meeting-closing-prayer').value;
-    
-    let content;
-    try {
-        content = JSON.parse(document.getElementById('meeting-content-json').value);
-    } catch (error) {
-        alert('Error en el formato JSON del contenido. Por favor, verifica la sintaxis.');
-        return;
-    }
-    
-    if (currentEditKey && currentEditKey !== key) {
-        // Si se cambió la clave, eliminar la entrada vieja
-        delete meetingsData[currentEditKey];
-    }
-    
-    meetingsData[key] = {
-        date,
-        bibleReference,
-        president,
-        openingPrayer,
-        closingPrayer,
-        content
-    };
-
-    
-    // Guardar en localStorage
-    localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
-    
-    meetingModal.style.display = 'none';
-    renderAdminMeetings();
-    
-    // Actualizar la vista pública si estamos viendo esta reunión
-    const activeBtn = document.querySelector('.nav-btn.active');
-    if (activeBtn && activeBtn.getAttribute('data-section') === key) {
-        renderMeeting(key);
-    }
-}
-*/ 
 
 function handleMeetingSubmit(e) {
     e.preventDefault();
@@ -542,16 +675,6 @@ function exportData() {
     link.click();
 }
 
-/*
-function formatDisplayDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-}*/
-
 function formatDisplayDate(dateString) {
     // Dividir la fecha manualmente para evitar problemas de zona horaria
     const [year, month, day] = dateString.split('-');
@@ -563,7 +686,8 @@ function formatDisplayDate(dateString) {
         year: 'numeric'
     });
 }
-// ========== NUEVAS FUNCIONES AGREGAR AL FINAL ==========
+
+// ========== FUNCIONES EXISTENTES DE FORMULARIOS ==========
 
 function extractMeetingDetails(content) {
     // Valores por defecto
@@ -694,61 +818,6 @@ function extractMeetingDetails(content) {
     document.getElementById('life-7-duration').value = life7Duration;
     document.getElementById('life-8-duration').value = life8Duration;
 }
-/*
-function updateContentWithFormValues(content, values) {
-    let songCount = 0;
-    
-    return content.map(item => {
-        if (item.type === "song") {
-            songCount++;
-            if (songCount === 1) return { ...item, number: values.songOpening };
-            if (songCount === 2) return { ...item, number: values.songMiddle };
-            if (songCount === 3) return { ...item, number: values.songClosing };
-        }
-        else if (item.type === "section" && item.title.includes("TESOROS")) {
-            return {
-                ...item,
-                items: item.items.map((sectionItem, index) => {
-                    if (index === 0) {
-                        return {
-                            ...sectionItem,
-                            title: values.treasure1Title
-                        };
-                    }
-                    return sectionItem;
-                })
-            };
-        }
-        else if (item.type === "section" && item.title.includes("VIDA")) {
-            return {
-                ...item,
-                items: item.items.map((sectionItem, index) => {
-                    if (index === 0) {
-                        return { ...sectionItem, title: values.life7Title };
-                    }
-                    return sectionItem;
-                })
-            };
-        }
-        else if (item.type === "section" && item.title.includes("MAESTROS")) {
-            return {
-                ...item,
-                items: item.items.map((sectionItem, index) => {
-                    if (index === 0 && values.masters1Title) {
-                        return { ...sectionItem, title: values.masters1Title };
-                    }
-                    else if (index === 1 && values.masters2Title) {
-                        return { ...sectionItem, title: values.masters2Title };
-                    }
-                    else if (index === 2 && values.masters3Title) {
-                        return { ...sectionItem, title: values.masters3Title };
-                    }
-                    return sectionItem;
-                })
-            };
-        }    
-        return item;
-    });*/
 
 //Nueva versión de la función
 function updateContentWithFormValues(content, values) {
@@ -837,4 +906,3 @@ function updateContentWithFormValues(content, values) {
         return item;
     });    
 }
-// ========== FIN DE NUEVAS FUNCIONES ==========
