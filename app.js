@@ -1,5 +1,5 @@
 // Configuración
-const ADMIN_PASSWORD = "1914";
+const ADMIN_PASSWORD = "4911";
 
 // === CONFIGURACIÓN SUPABASE - REEMPLAZA CON TUS DATOS REALES ===
 const SUPABASE_URL = 'https://blyolzsymozdhpprrgar.supabase.co';  // Cambiar por tu URL
@@ -678,7 +678,7 @@ function renderMeeting(sectionId) {
 function showLoginModal() {
     loginModal.style.display = 'block';
     loginMessage.style.display = 'none';
-    document.getElementById('password').value = '1914';
+    document.getElementById('password').value = '';
 }
 
 function handleLogin(e) {
