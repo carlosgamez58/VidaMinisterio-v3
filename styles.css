@@ -792,7 +792,7 @@ body {
 }
 
 .month-selector select {
-    padding: 12px 15px;
+    padding: 8px 6px;
     border: 2px solid #3498db;
     border-radius: 6px;
     font-size: 1rem;
@@ -831,5 +831,90 @@ body {
     
     .month-selector select {
         font-size: 16px; /* Previene zoom en iOS */
+    }
+}
+
+/* ========== ELEMENTOS DINÁMICOS ========== */
+.dynamic-items-container {
+    margin: 10px 0;
+}
+
+.dynamic-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    position: relative;
+}
+
+.dynamic-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.dynamic-item-number {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.btn-remove-item {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.btn-remove-item:hover {
+    background: #c0392b;
+}
+
+.btn-add-item {
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.btn-add-item:hover {
+    background: #219a52;
+}
+
+.dynamic-item-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    align-items: end;
+}
+
+.dynamic-item-fields .form-group {
+    margin-bottom: 0;
+}
+
+/* Responsive para elementos dinámicos */
+@media (max-width: 768px) {
+    .dynamic-item-fields {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .dynamic-item-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .btn-add-item {
+        margin-left: 0;
+        margin-top: 10px;
     }
 }

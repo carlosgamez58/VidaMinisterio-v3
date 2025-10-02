@@ -58,7 +58,6 @@ const meetingsContainer = document.getElementById('meetings-container');
 const meetingModal = document.getElementById('meeting-modal');
 const meetingForm = document.getElementById('meeting-form');
 const addMeetingBtn = document.getElementById('add-meeting-btn');
-const exportDataBtn = document.getElementById('export-data-btn');
 
 // Variables globales
 let currentEditKey = null;
@@ -70,6 +69,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeMonthSelector();
     updateMonthDisplay();
     updateNavigation();
+    
+    // Inicializar elementos dinámicos (solo event listeners)
+    initializeDynamicElements();
     
     // Cargar la primera reunión disponible
     const firstMeeting = Object.keys(meetingsData)
@@ -86,7 +88,6 @@ document.addEventListener('DOMContentLoaded', function() {
     logoutBtn.addEventListener('click', handleLogout);
     loginForm.addEventListener('submit', handleLogin);
     addMeetingBtn.addEventListener('click', openAddModal);
-    exportDataBtn.addEventListener('click', exportData);
     meetingForm.addEventListener('submit', handleMeetingSubmit);
 
     // Event listeners para cerrar modales
@@ -125,7 +126,7 @@ function initializeMonthSelector() {
         monthSelect.addEventListener('change', function() {
             currentMonth = this.value;
             updateMonthDisplay();
-            updateNavigation(); // Esto actualizará la navegación Y cargará la primera reunión
+            updateNavigation();
             
             // Si estamos en vista de administración, actualizar también
             if (adminPanel.style.display === 'block') {
@@ -139,9 +140,8 @@ function initializeMonthSelector() {
     }
 }
 
-
 function generateMonthTemplates() {
-    if (!confirm(`¿Generar plantillas para ${getMonthName(currentMonth)}? Esto creará reuniones para todos los jueves del mes.`)) {
+    if (!confirm(`¿Generar plantillas para ${getMonthName(currentMonth)}? Esto creará reuniones para todos los jueves del mes que no tengan ya una plantilla.`)) {
         return;
     }
     
@@ -149,26 +149,39 @@ function generateMonthTemplates() {
     const weeks = getWeeksInMonth(year, month);
     
     let generatedCount = 0;
+    let skippedCount = 0;
     
     weeks.forEach((week, index) => {
-        // Usar la fecha como clave (ej: "2025-10-02") en lugar de "semana-1-10-2025"
-        const weekKey = week.start; // Esto será algo como "2025-10-02"
         const meetingDate = week.start;
         
-        if (!meetingsData[weekKey]) {
-            meetingsData[weekKey] = createMeetingTemplate(meetingDate, index + 1);
+        // VERIFICAR CORRECTAMENTE si ya existe una reunión para esta fecha
+        const existingMeeting = Object.keys(meetingsData).find(key => {
+            const storedMeeting = meetingsData[key];
+            return storedMeeting.date === meetingDate;
+        });
+        
+        if (!existingMeeting) {
+            meetingsData[meetingDate] = createMeetingTemplate(meetingDate, index + 1);
             generatedCount++;
+        } else {
+            skippedCount++;
         }
     });
     
-    // Guardar cambios
-    localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
-    
-    // Actualizar navegación y vista
-    updateNavigation();
-    renderAdminMeetings();
-    
-    alert(`Se generaron ${generatedCount} nuevas plantillas para los jueves de ${getMonthName(currentMonth)}`);
+    // Guardar cambios solo si se generaron nuevas plantillas
+    if (generatedCount > 0) {
+        localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
+        
+        // Actualizar navegación y vista
+        updateNavigation();
+        if (adminPanel.style.display === 'block') {
+            renderAdminMeetings();
+        }
+        
+        alert(`✅ Se generaron ${generatedCount} nuevas plantillas para ${getMonthName(currentMonth)}. ${skippedCount > 0 ? `Se omitieron ${skippedCount} reuniones que ya existían.` : ''}`);
+    } else {
+        alert(`ℹ️ No se generaron nuevas plantillas. ${skippedCount > 0 ? `Todas las ${skippedCount} reuniones para ${getMonthName(currentMonth)} ya existen.` : 'No hay jueves en este mes para generar reuniones.'}`);
+    }
 }
 
 function getWeeksInMonth(year, month) {
@@ -178,9 +191,14 @@ function getWeeksInMonth(year, month) {
     
     let currentDate = new Date(firstDay);
     
-    // Ajustar al primer JUEVES (día de reunión)
-    while (currentDate.getDay() !== 4) { // 4 = jueves (0=domingo, 1=lunes, 2=martes, 3=miércoles, 4=jueves)
+    // Ajustar al primer JUEVES (día de reunión) - 4 = jueves
+    while (currentDate <= lastDay && currentDate.getDay() !== 4) {
         currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Si no encontramos ningún jueves, retornar array vacío
+    if (currentDate > lastDay) {
+        return weeks;
     }
     
     // Generar solo los jueves del mes (una reunión por semana)
@@ -201,9 +219,6 @@ function getWeeksInMonth(year, month) {
 function createMeetingTemplate(date, weekNumber) {
     const [year, month, day] = date.split('-');
     const monthName = getMonthName(currentMonth);
-    
-    // Crear una clave más legible (ej: "2025-10-02" en lugar de "semana-1-10-2025")
-    // Esto hará que sea más fácil identificar las reuniones
     
     return {
         date: date,
@@ -254,7 +269,7 @@ function updateNavigation() {
     // Limpiar navegación existente
     navigation.innerHTML = '';
     
-    // Obtener reuniones del mes actual - CORREGIDO
+    // Obtener reuniones del mes actual
     const monthMeetings = Object.keys(meetingsData)
         .filter(key => {
             const meetingDate = meetingsData[key].date;
@@ -326,7 +341,6 @@ function updateMonthDisplay() {
 
 // ========== FUNCIONES EXISTENTES (MANTENER) ==========
 
-// Función para renderizar reunión pública
 function renderMeeting(sectionId) {
     const meeting = meetingsData[sectionId];
     const meetingContent = document.getElementById('meeting-content');
@@ -382,7 +396,6 @@ function renderMeeting(sectionId) {
                 </div>
             `;
         } else if (item.type === "section") {
-            // Determinar la clase CSS según el título de la sección
             let sectionClass = "section-otros";
             if (item.title.includes("TESOROS")) sectionClass = "section-tesoros";
             else if (item.title.includes("MAESTROS")) sectionClass = "section-maestros";
@@ -427,7 +440,6 @@ function renderMeeting(sectionId) {
     meetingContent.innerHTML = html;
 }
 
-// Funciones de administración
 function showLoginModal() {
     loginModal.style.display = 'block';
     loginMessage.style.display = 'none';
@@ -451,9 +463,7 @@ function handleLogin(e) {
 function showAdminView() {
     publicContent.style.display = 'none';
     adminPanel.style.display = 'block'; 
-    // Ocultar el botón de acceso administrativo
     adminAccessBtn.style.display = 'none';
-    // Asegurar que se muestren las reuniones del mes actual
     renderAdminMeetings();
 }
 
@@ -463,23 +473,19 @@ function showPublicView() {
     adminAccessBtn.style.display = 'block';
     adminAccessBtn.style.margin = '20px auto 0 auto';
     
-    // Actualizar navegación al volver a vista pública
     updateNavigation();
     updateMonthDisplay();
     
-    // Recargar la reunión actual
     const activeBtn = document.querySelector('.nav-btn.active');
     if (activeBtn) {
         renderMeeting(activeBtn.getAttribute('data-section'));
     } else {
-        // Si no hay reunión activa, cargar la primera disponible del mes actual
         const firstMeeting = Object.keys(meetingsData)
             .filter(key => meetingsData[key].date.startsWith(currentMonth))
             .sort((a, b) => new Date(meetingsData[a].date) - new Date(meetingsData[b].date))[0];
         
         if (firstMeeting) {
             renderMeeting(firstMeeting);
-            // Activar el botón correspondiente
             const correspondingBtn = document.querySelector(`.nav-btn[data-section="${firstMeeting}"]`);
             if (correspondingBtn) {
                 correspondingBtn.classList.add('active');
@@ -491,7 +497,6 @@ function showPublicView() {
 function handleLogout() {
     if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
         showPublicView();
-        // Opcional: Resetear formularios
         loginForm.reset();
         meetingForm.reset();
     }
@@ -500,7 +505,6 @@ function handleLogout() {
 function renderAdminMeetings() {
     meetingsContainer.innerHTML = '';
     
-    // Filtrar reuniones solo del mes actual
     const currentMonthMeetings = Object.keys(meetingsData)
         .filter(key => {
             const meetingDate = meetingsData[key].date;
@@ -537,7 +541,6 @@ function renderAdminMeetings() {
         meetingsContainer.appendChild(meetingElement);
     });
     
-    // Agregar event listeners a los botones
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', function() {
             const key = this.getAttribute('data-key');
@@ -557,6 +560,28 @@ function openAddModal() {
     document.getElementById('modal-title').textContent = 'Agregar Nueva Reunión';
     meetingForm.reset();
     currentEditKey = null;
+    
+    // Inicializar elementos dinámicos para nueva reunión (limpios)
+    clearMastersContainer();
+    clearLifeContainer();
+    
+    // Agregar elementos por defecto para nueva reunión
+    for (let i = 1; i <= 3; i++) {
+        addMastersItem(i, {
+            title: getDefaultMastersTitle(i),
+            participants: getDefaultMastersParticipants(i),
+            duration: getDefaultMastersDuration(i)
+        });
+    }
+    
+    for (let i = 7; i <= 8; i++) {
+        addLifeItem(i, {
+            title: getDefaultLifeTitle(i),
+            participants: getDefaultLifeParticipants(i),
+            duration: getDefaultLifeDuration(i)
+        });
+    }
+    
     meetingModal.style.display = 'block';
 }
 
@@ -571,9 +596,8 @@ function openEditModal(key) {
     document.getElementById('meeting-president').value = meeting.president;
     document.getElementById('meeting-opening-prayer').value = meeting.openingPrayer;
     document.getElementById('meeting-closing-prayer').value = meeting.closingPrayer;
-    document.getElementById('meeting-content-json').value = JSON.stringify(meeting.content, null, 2);
     
-    // NUEVO: Extraer valores para los nuevos campos
+    // Extraer detalles SIN inicializar contenedores desde cero
     extractMeetingDetails(meeting.content);
     
     currentEditKey = key;
@@ -590,12 +614,10 @@ function handleMeetingSubmit(e) {
     const openingPrayer = document.getElementById('meeting-opening-prayer').value;
     const closingPrayer = document.getElementById('meeting-closing-prayer').value;
     
-    // Obtener los nuevos valores Completos
     const songOpening = parseInt(document.getElementById('song-opening').value);
     const songMiddle = parseInt(document.getElementById('song-middle').value);
     const songClosing = parseInt(document.getElementById('song-closing').value);
 
-    // TESOROS
     const treasure1Title = document.getElementById('treasure-1-title').value;
     const treasure2Title = document.getElementById('treasure-2-title').value;
     const treasure3Title = document.getElementById('treasure-3-title').value;
@@ -604,52 +626,15 @@ function handleMeetingSubmit(e) {
     const treasure3Participants = document.getElementById('treasure-3-participants').value;
     const treasure1Duration = document.getElementById('treasure-1-duration').value;
     const treasure2Duration = document.getElementById('treasure-2-duration').value;
-    const treasure3Duration = document.getElementById('treasure-3-duration').value; 
+    const treasure3Duration = document.getElementById('treasure-3-duration').value;
 
-    // MAESTROS
-    const masters1Title = document.getElementById('masters-1-title').value;
-    const masters2Title = document.getElementById('masters-2-title').value;
-    const masters3Title = document.getElementById('masters-3-title').value;
-    const masters1Participants = document.getElementById('masters-1-participants').value;
-    const masters2Participants = document.getElementById('masters-2-participants').value;
-    const masters3Participants = document.getElementById('masters-3-participants').value;
-    const masters1Duration = document.getElementById('masters-1-duration').value;
-    const masters2Duration = document.getElementById('masters-2-duration').value;
-    const masters3Duration = document.getElementById('masters-3-duration').value;    
-    
-    // VIDA CRISTIANA
-    const life7Title = document.getElementById('life-7-title').value;
-    const life8Title = document.getElementById('life-8-title').value;
-    const life7Participants = document.getElementById('life-7-participants').value;
-    const life8Participants = document.getElementById('life-8-participants').value;
-    const life7Duration = document.getElementById('life-7-duration').value;
-    const life8Duration = document.getElementById('life-8-duration').value;
-
-    let content;
-    try {
-        content = JSON.parse(document.getElementById('meeting-content-json').value);
-        
-        // Actualizar los valores en el contenido
-        content = updateContentWithFormValues(content, {
-            songOpening, songMiddle, songClosing,
-            // TESOROS
-            treasure1Title, treasure2Title, treasure3Title,
-            treasure1Participants, treasure2Participants, treasure3Participants,
-            treasure1Duration, treasure2Duration, treasure3Duration,
-            // MAESTROS
-            masters1Title, masters2Title, masters3Title,
-            masters1Participants, masters2Participants, masters3Participants,
-            masters1Duration, masters2Duration, masters3Duration,
-            // VIDA CRISTIANA
-            life7Title, life8Title,
-            life7Participants, life8Participants,
-            life7Duration, life8Duration
-        });
-        
-    } catch (error) {
-        alert('Error en el formato JSON del contenido. Por favor, verifica la sintaxis.');
-        return;
-    }
+    // Generar el contenido automáticamente desde los campos del formulario
+    const content = generateContentFromForm({
+        songOpening, songMiddle, songClosing,
+        treasure1Title, treasure2Title, treasure3Title,
+        treasure1Participants, treasure2Participants, treasure3Participants,
+        treasure1Duration, treasure2Duration, treasure3Duration
+    });
     
     if (currentEditKey && currentEditKey !== key) {
         delete meetingsData[currentEditKey];
@@ -680,7 +665,6 @@ function deleteMeeting(key) {
         localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
         renderAdminMeetings();
         
-        // Si esta era la reunión activa, cargar la primera disponible
         const activeBtn = document.querySelector('.nav-btn.active');
         if (activeBtn && activeBtn.getAttribute('data-section') === key) {
             const firstKey = Object.keys(meetingsData)[0];
@@ -694,20 +678,9 @@ function deleteMeeting(key) {
     }
 }
 
-function exportData() {
-    const dataStr = JSON.stringify(meetingsData, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-    
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(dataBlob);
-    link.download = 'reuniones-congregacion.json';
-    link.click();
-}
-
 function formatDisplayDate(dateString) {
-    // Dividir la fecha manualmente para evitar problemas de zona horaria
     const [year, month, day] = dateString.split('-');
-    const date = new Date(year, month - 1, day); // month - 1 porque enero es 0
+    const date = new Date(year, month - 1, day);
     
     return date.toLocaleDateString('es-ES', {
         day: '2-digit',
@@ -716,15 +689,256 @@ function formatDisplayDate(dateString) {
     });
 }
 
-// ========== FUNCIONES EXISTENTES DE FORMULARIOS ==========
+// ========== FUNCIONES PARA ELEMENTOS DINÁMICOS ==========
+
+function initializeDynamicElements() {
+    // Solo inicializar event listeners, NO los contenedores
+    document.querySelectorAll('.btn-add-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const section = this.getAttribute('data-section');
+            if (section === 'masters') {
+                addMastersItem(getNextMastersNumber());
+            } else if (section === 'life') {
+                addLifeItem(getNextLifeNumber());
+            }
+        });
+    });
+}
+
+function clearMastersContainer() {
+    const container = document.getElementById('masters-items-container');
+    container.innerHTML = '';
+}
+
+function clearLifeContainer() {
+    const container = document.getElementById('life-items-container');
+    container.innerHTML = '';
+}
+
+function addMastersItem(number, data = null) {
+    const container = document.getElementById('masters-items-container');
+    const itemId = `masters-${number}`;
+    
+    // Verificar si el elemento ya existe
+    if (document.getElementById(`${itemId}-container`)) {
+        return; // No duplicar elementos existentes
+    }
+    
+    const itemHTML = `
+        <div class="dynamic-item" id="${itemId}-container">
+            <div class="dynamic-item-header">
+                <span class="dynamic-item-number">Elemento ${number}</span>
+                <button type="button" class="btn-remove-item" data-item="${itemId}">🗑️ Eliminar</button>
+            </div>
+            <div class="dynamic-item-fields">
+                <div class="form-group">
+                    <label for="${itemId}-title">Título:</label>
+                    <input type="text" id="${itemId}-title" 
+                           value="${data?.title || getDefaultMastersTitle(number)}" 
+                           placeholder="Título" required>
+                </div>
+                <div class="form-group">
+                    <label for="${itemId}-participants">Participantes:</label>
+                    <input type="text" id="${itemId}-participants" 
+                           value="${data?.participants || getDefaultMastersParticipants(number)}" 
+                           placeholder="Participantes" required>
+                </div>
+                <div class="form-group">
+                    <label for="${itemId}-duration">Duración:</label>
+                    <input type="text" id="${itemId}-duration" 
+                           value="${data?.duration || getDefaultMastersDuration(number)}" 
+                           placeholder="Duración" required>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', itemHTML);
+    
+    // Agregar event listener al botón de eliminar
+    const removeBtn = document.querySelector(`[data-item="${itemId}"]`);
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            removeMastersItem(number);
+        });
+    }
+}
+
+function addLifeItem(number, data = null) {
+    const container = document.getElementById('life-items-container');
+    const itemId = `life-${number}`;
+    
+    // Verificar si el elemento ya existe
+    if (document.getElementById(`${itemId}-container`)) {
+        return; // No duplicar elementos existentes
+    }
+    
+    const itemHTML = `
+        <div class="dynamic-item" id="${itemId}-container">
+            <div class="dynamic-item-header">
+                <span class="dynamic-item-number">Elemento ${number}</span>
+                <button type="button" class="btn-remove-item" data-item="${itemId}">🗑️ Eliminar</button>
+            </div>
+            <div class="dynamic-item-fields">
+                <div class="form-group">
+                    <label for="${itemId}-title">Título:</label>
+                    <input type="text" id="${itemId}-title" 
+                           value="${data?.title || getDefaultLifeTitle(number)}" 
+                           placeholder="Título" required>
+                </div>
+                <div class="form-group">
+                    <label for="${itemId}-participants">Participantes:</label>
+                    <input type="text" id="${itemId}-participants" 
+                           value="${data?.participants || getDefaultLifeParticipants(number)}" 
+                           placeholder="Participantes" required>
+                </div>
+                <div class="form-group">
+                    <label for="${itemId}-duration">Duración:</label>
+                    <input type="text" id="${itemId}-duration" 
+                           value="${data?.duration || getDefaultLifeDuration(number)}" 
+                           placeholder="Duración" required>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', itemHTML);
+    
+    // Agregar event listener al botón de eliminar
+    const removeBtn = document.querySelector(`[data-item="${itemId}"]`);
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            removeLifeItem(number);
+        });
+    }
+}
+
+function removeMastersItem(number) {
+    const container = document.getElementById(`masters-${number}-container`);
+    if (container && confirm('¿Estás seguro de que quieres eliminar este elemento?')) {
+        container.remove();
+    }
+}
+
+function removeLifeItem(number) {
+    const container = document.getElementById(`life-${number}-container`);
+    if (container && confirm('¿Estás seguro de que quieres eliminar este elemento?')) {
+        container.remove();
+    }
+}
+
+function getDefaultMastersTitle(number) {
+    const titles = {
+        1: "De casa en casa",
+        2: "Predicación Informal", 
+        3: "Discurso",
+        4: "Nueva Conversación",
+        5: "Revisita"
+    };
+    return titles[number] || "Nuevo Elemento";
+}
+
+function getDefaultMastersParticipants(number) {
+    return number === 3 ? "NOMBRE" : "NOMBRE / NOMBRE";
+}
+
+function getDefaultMastersDuration(number) {
+    return "4 mins.";
+}
+
+function getDefaultLifeTitle(number) {
+    const titles = {
+        7: "Cuando tengan problemas en su matrimonio, no aparten a Jehová de su vida",
+        8: "Estudio bíblico de congregación",
+        9: "Necesidades de la congregación",
+        10: "Anuncios"
+    };
+    return titles[number] || "Nuevo Elemento";
+}
+
+function getDefaultLifeParticipants(number) {
+    return number === 8 ? "NOMBRE / NOMBRE" : "NOMBRE";
+}
+
+function getDefaultLifeDuration(number) {
+    return number === 8 ? "30 mins." : "4 mins.";
+}
+
+function getNextMastersNumber() {
+    const containers = document.querySelectorAll('#masters-items-container .dynamic-item');
+    let maxNumber = 0;
+    
+    containers.forEach(container => {
+        const numberText = container.querySelector('.dynamic-item-number').textContent;
+        const number = parseInt(numberText.replace('Elemento ', ''));
+        if (number > maxNumber) maxNumber = number;
+    });
+    
+    return maxNumber + 1;
+}
+
+function getNextLifeNumber() {
+    const containers = document.querySelectorAll('#life-items-container .dynamic-item');
+    let maxNumber = 6;
+    
+    containers.forEach(container => {
+        const numberText = container.querySelector('.dynamic-item-number').textContent;
+        const number = parseInt(numberText.replace('Elemento ', ''));
+        if (number > maxNumber) maxNumber = number;
+    });
+    
+    return maxNumber + 1;
+}
+
+function getDynamicMastersItems() {
+    const items = [];
+    const containers = document.querySelectorAll('#masters-items-container .dynamic-item');
+    
+    containers.forEach(container => {
+        const numberText = container.querySelector('.dynamic-item-number').textContent;
+        const number = parseInt(numberText.replace('Elemento ', ''));
+        const title = document.getElementById(`masters-${number}-title`).value;
+        const participants = document.getElementById(`masters-${number}-participants`).value;
+        const duration = document.getElementById(`masters-${number}-duration`).value;
+        
+        items.push({
+            number: number,
+            title: title,
+            participants: participants,
+            duration: duration
+        });
+    });
+    
+    return items.sort((a, b) => a.number - b.number);
+}
+
+function getDynamicLifeItems() {
+    const items = [];
+    const containers = document.querySelectorAll('#life-items-container .dynamic-item');
+    
+    containers.forEach(container => {
+        const numberText = container.querySelector('.dynamic-item-number').textContent;
+        const number = parseInt(numberText.replace('Elemento ', ''));
+        const title = document.getElementById(`life-${number}-title`).value;
+        const participants = document.getElementById(`life-${number}-participants`).value;
+        const duration = document.getElementById(`life-${number}-duration`).value;
+        
+        items.push({
+            number: number,
+            title: title,
+            participants: participants,
+            duration: duration
+        });
+    });
+    
+    return items.sort((a, b) => a.number - b.number);
+}
 
 function extractMeetingDetails(content) {
-    // Valores por defecto
     let songOpening = 93;
     let songMiddle = 131;
     let songClosing = 51;
 
-    // Valores por defecto para TESOROS
     let treasure1Title = "Fortalezcan su cuerda triple";
     let treasure2Title = "Busquemos perlas escondidas";
     let treasure3Title = "Lectura de la Biblia";
@@ -735,26 +949,10 @@ function extractMeetingDetails(content) {
     let treasure2Duration = "10 mins.";
     let treasure3Duration = "4 mins.";
 
-    // Valores por defecto para MAESTROS
-    let masters1Title = "DE CASA EN CASA";
-    let masters2Title = "PREDICACIÓN INFORMAL";
-    let masters3Title = "DISCURSO";
-    let masters1Participants = "NOMBRE / NOMBRE";
-    let masters2Participants = "NOMBRE / NOMBRE";
-    let masters3Participants = "NOMBRE";
-    let masters1Duration = "4 mins.";
-    let masters2Duration = "4 mins.";
-    let masters3Duration = "4 mins.";
+    // Limpiar contenedores ANTES de extraer datos
+    clearMastersContainer();
+    clearLifeContainer();
 
-    // Valores por defecto para VIDA CRISTIANA
-    let life7Title = "Cuando tengan problemas en su matrimonio, no aparten a Jehová de su vida";
-    let life8Title = "Estudio bíblico de congregación";
-    let life7Participants = "NOMBRE";
-    let life8Participants = "NOMBRE / NOMBRE";
-    let life7Duration = "4 mins.";
-    let life8Duration = "30 mins.";
-
-    // Extraer valores del contenido
     content.forEach(item => {
         if (item.type === "song") {
             if (content.indexOf(item) === 0) songOpening = item.number;
@@ -762,7 +960,6 @@ function extractMeetingDetails(content) {
             else if (content.indexOf(item) === 7) songClosing = item.number;
         }
         else if (item.type === "section" && item.title.includes("TESOROS")) {
-            // Extraer los 3 ítems de TESOROS
             if (item.items[0]) {
                 treasure1Title = item.items[0].title;
                 treasure1Participants = item.items[0].participants || "NOMBRE / NOMBRE";
@@ -779,45 +976,32 @@ function extractMeetingDetails(content) {
                 treasure3Duration = item.items[2].duration || "4 mins.";
             }    
         }
-         else if (item.type === "section" && item.title.includes("MAESTROS")) {
-            // Extraer los 3 ítems de MAESTROS
-            if (item.items[0]) {
-                masters1Title = item.items[0].title;
-                masters1Participants = item.items[0].participants || "NOMBRE / NOMBRE";
-                masters1Duration = item.items[0].duration || "4 mins.";
-            }
-            if (item.items[1]) {
-                masters2Title = item.items[1].title;
-                masters2Participants = item.items[1].participants || "NOMBRE / NOMBRE";
-                masters2Duration = item.items[1].duration || "4 mins.";
-            }
-            if (item.items[2]) {
-                masters3Title = item.items[2].title;
-                masters3Participants = item.items[2].participants || "NOMBRE";
-                masters3Duration = item.items[2].duration || "4 mins.";
-            }
+        else if (item.type === "section" && item.title.includes("MAESTROS")) {
+            item.items.forEach((sectionItem, index) => {
+                const itemNumber = sectionItem.number;
+                addMastersItem(itemNumber, {
+                    title: sectionItem.title,
+                    participants: sectionItem.participants,
+                    duration: sectionItem.duration
+                });
+            });
         }
         else if (item.type === "section" && item.title.includes("VIDA")) {
-            // Extraer los 2 ítems de VIDA CRISTIANA
-            if (item.items[0]) {
-                life7Title = item.items[0].title;
-                life7Participants = item.items[0].participants || "NOMBRE";
-                life7Duration = item.items[0].duration || "4 mins.";
-            }
-            if (item.items[1]) {
-                life8Title = item.items[1].title;
-                life8Participants = item.items[1].participants || "NOMBRE / NOMBRE";
-                life8Duration = item.items[1].duration || "30 mins.";
-            }
+            item.items.forEach((sectionItem, index) => {
+                const itemNumber = sectionItem.number;
+                addLifeItem(itemNumber, {
+                    title: sectionItem.title,
+                    participants: sectionItem.participants,
+                    duration: sectionItem.duration
+                });
+            });
         }                        
     });
     
-    // Llenar los campos del formulario - TÍTULOS
     document.getElementById('song-opening').value = songOpening;
     document.getElementById('song-middle').value = songMiddle;
     document.getElementById('song-closing').value = songClosing;
 
-    // TESOROS
     document.getElementById('treasure-1-title').value = treasure1Title;
     document.getElementById('treasure-2-title').value = treasure2Title;
     document.getElementById('treasure-3-title').value = treasure3Title;
@@ -827,137 +1011,36 @@ function extractMeetingDetails(content) {
     document.getElementById('treasure-1-duration').value = treasure1Duration;
     document.getElementById('treasure-2-duration').value = treasure2Duration;
     document.getElementById('treasure-3-duration').value = treasure3Duration;
-
-    // MAESTROS
-    document.getElementById('masters-1-title').value = masters1Title;
-    document.getElementById('masters-2-title').value = masters2Title;
-    document.getElementById('masters-3-title').value = masters3Title;
-    document.getElementById('masters-1-participants').value = masters1Participants;
-    document.getElementById('masters-2-participants').value = masters2Participants;
-    document.getElementById('masters-3-participants').value = masters3Participants;
-    document.getElementById('masters-1-duration').value = masters1Duration;
-    document.getElementById('masters-2-duration').value = masters2Duration;
-    document.getElementById('masters-3-duration').value = masters3Duration;
-
-    // VIDA CRISTIANA
-    document.getElementById('life-7-title').value = life7Title;
-    document.getElementById('life-8-title').value = life8Title;
-    document.getElementById('life-7-participants').value = life7Participants;
-    document.getElementById('life-8-participants').value = life8Participants;
-    document.getElementById('life-7-duration').value = life7Duration;
-    document.getElementById('life-8-duration').value = life8Duration;
 }
 
-//Nueva versión de la función
-function updateContentWithFormValues(content, values) {
-    let songCount = 0;
+function generateContentFromForm(values) {
+    const mastersItems = getDynamicMastersItems();
+    const lifeItems = getDynamicLifeItems();
     
-    return content.map(item => {
-        if (item.type === "song") {
-            songCount++;
-            if (songCount === 1) return { ...item, number: values.songOpening };
-            if (songCount === 2) return { ...item, number: values.songMiddle };
-            if (songCount === 3) return { ...item, number: values.songClosing };
-        }
-        else if (item.type === "section" && item.title.includes("TESOROS")) {
-            return {
-                ...item,
-                items: item.items.map((sectionItem, index) => {
-                    const updatedItem = { ...sectionItem };
-                    
-                    if (index === 0) {
-                        if (values.treasure1Title) updatedItem.title = values.treasure1Title;
-                        if (values.treasure1Participants) updatedItem.participants = values.treasure1Participants;
-                        if (values.treasure1Duration) updatedItem.duration = values.treasure1Duration;
-                    }
-                    else if (index === 1) {
-                        if (values.treasure2Title) updatedItem.title = values.treasure2Title;
-                        if (values.treasure2Participants) updatedItem.participants = values.treasure2Participants;
-                        if (values.treasure2Duration) updatedItem.duration = values.treasure2Duration;
-                    }
-                    else if (index === 2) {
-                        if (values.treasure3Title) updatedItem.title = values.treasure3Title;
-                        if (values.treasure3Participants) updatedItem.participants = values.treasure3Participants;
-                        if (values.treasure3Duration) updatedItem.duration = values.treasure3Duration;
-                    }
-                    
-                    return updatedItem;
-                })
-            };
-        }
-        else if (item.type === "section" && item.title.includes("MAESTROS")) {
-            return {
-                ...item,
-                items: item.items.map((sectionItem, index) => {
-                    const updatedItem = { ...sectionItem };
-                    
-                    if (index === 0) {
-                        if (values.masters1Title) updatedItem.title = values.masters1Title;
-                        if (values.masters1Participants) updatedItem.participants = values.masters1Participants;
-                        if (values.masters1Duration) updatedItem.duration = values.masters1Duration;
-                    }
-                    else if (index === 1) {
-                        if (values.masters2Title) updatedItem.title = values.masters2Title;
-                        if (values.masters2Participants) updatedItem.participants = values.masters2Participants;
-                        if (values.masters2Duration) updatedItem.duration = values.masters2Duration;
-                    }
-                    else if (index === 2) {
-                        if (values.masters3Title) updatedItem.title = values.masters3Title;
-                        if (values.masters3Participants) updatedItem.participants = values.masters3Participants;
-                        if (values.masters3Duration) updatedItem.duration = values.masters3Duration;
-                    }
-                    
-                    return updatedItem;
-                })
-            };
-        }
-        else if (item.type === "section" && item.title.includes("VIDA")) {
-            return {
-                ...item,
-                items: item.items.map((sectionItem, index) => {
-                    const updatedItem = { ...sectionItem };
-                    
-                    if (index === 0) {
-                        if (values.life7Title) updatedItem.title = values.life7Title;
-                        if (values.life7Participants) updatedItem.participants = values.life7Participants;
-                        if (values.life7Duration) updatedItem.duration = values.life7Duration;
-                    }
-                    else if (index === 1) {
-                        if (values.life8Title) updatedItem.title = values.life8Title;
-                        if (values.life8Participants) updatedItem.participants = values.life8Participants;
-                        if (values.life8Duration) updatedItem.duration = values.life8Duration;
-                    }
-                    
-                    return updatedItem;
-                })
-            };
-        }
-        return item;
-    });    
+    return [
+        { type: "song", number: values.songOpening },
+        { type: "intro", duration: "1 min." },
+        { 
+            type: "section", 
+            title: "TESOROS DE LA BIBLIA", 
+            items: [
+                { number: 1, title: values.treasure1Title, duration: values.treasure1Duration, participants: values.treasure1Participants },
+                { number: 2, title: values.treasure2Title, duration: values.treasure2Duration, participants: values.treasure2Participants },
+                { number: 3, title: values.treasure3Title, duration: values.treasure3Duration, participants: values.treasure3Participants }
+            ]
+        },
+        { 
+            type: "section", 
+            title: "SEAMOS MEJORES MAESTROS", 
+            items: mastersItems
+        },
+        { type: "song", number: values.songMiddle },
+        { 
+            type: "section", 
+            title: "NUESTRA VIDA CRISTIANA", 
+            items: lifeItems
+        },
+        { type: "conclusion", duration: "3 mins." },
+        { type: "song", number: values.songClosing }
+    ];
 }
-// ========== FIN DE NUEVAS FUNCIONES ==========
-// ========== FUNCIÓN TEMPORAL PARA LIMPIAR PLANTILLAS DUPLICADAS ==========
-// Función temporal para limpiar plantillas duplicadas - EJECUTAR UNA SOLA VEZ
-/*function cleanDuplicateTemplates() {
-    const keysToDelete = [];
-    
-    // Buscar todas las claves que empiecen con "semana-"
-    Object.keys(meetingsData).forEach(key => {
-        if (key.startsWith('semana-')) {
-            keysToDelete.push(key);
-        }
-    });
-    
-    // Eliminar las plantillas duplicadas
-    keysToDelete.forEach(key => {
-        delete meetingsData[key];
-    });
-    
-    // Guardar cambios
-    localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
-    
-    alert(`Se eliminaron ${keysToDelete.length} plantillas duplicadas`);
-    updateNavigation();
-    renderAdminMeetings();
-}*/
-// ========== FIN FUNCIÓN TEMPORAL ==========
