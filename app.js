@@ -1,49 +1,15 @@
-// Configuración - Cambia esta contraseña por una segura
+// Configuración
 const ADMIN_PASSWORD = "1914";
 
+// === CONFIGURACIÓN SUPABASE - REEMPLAZA CON TUS DATOS REALES ===
+const SUPABASE_URL = 'https://blyolzsymozdhpprrgar.supabase.co';  // Cambiar por tu URL
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJseW9senN5bW96ZGhwcHJyZ2FyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MjYxMDcsImV4cCI6MjA3NTAwMjEwN30.UPr9REeEUPRMVhDYtbNDFsrtwBFxB2OEYAwYiuwH7-o';          // Cambiar por tu key
+
+// Inicializar Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // Datos de las reuniones (compartidos entre vista pública y admin)
-let meetingsData = JSON.parse(localStorage.getItem('meetingsData')) || {
-    "octubre-2": {
-        date: "2025-10-02",
-        bibleReference: "ECLESIASTÉS 3,4",
-        president: "NOMBRE",
-        openingPrayer: "NOMBRE",
-        closingPrayer: "NOMBRE",
-        content: [
-            { type: "song", number: 93 },
-            { type: "intro", duration: "1 min." },
-            { 
-                type: "section", 
-                title: "TESOROS DE LA BIBLIA", 
-                items: [
-                    { number: 1, title: "Fortalezcan su cuerda triple", duration: "10 mins.", participants: "NOMBRE / NOMBRE" },
-                    { number: 2, title: "Busquemos perlas escondidas", duration: "10 mins.", participants: "NOMBRE / NOMBRE" },
-                    { number: 3, title: "Lectura de la Biblia", duration: "4 mins.", participants: "NOMBRE / NOMBRE" }
-                ]
-            },
-            { 
-                type: "section", 
-                title: "SEAMOS MEJORES MAESTROS", 
-                items: [
-                    { number: 4, title: "De casa en casa", duration: "4 mins.", participants: "NOMBRE / NOMBRE" },
-                    { number: 5, title: "Predicación Informal", duration: "4 mins.", participants: "NOMBRE / NOMBRE" },
-                    { number: 6, title: "Discurso", duration: "4 mins.", participants: "NOMBRE" }
-                ]
-            },
-            { type: "song", number: 131 },
-            { 
-                type: "section", 
-                title: "NUESTRA VIDA CRISTIANA", 
-                items: [
-                    { number: 7, title: "Cuando tengan problemas en su matrimonio, no aparten a Jehová de su vida", duration: "4 mins.", participants: "NOMBRE" },
-                    { number: 8, title: "Estudio bíblico de congregación", duration: "30 mins.", participants: "NOMBRE / NOMBRE", conductor: true }
-                ]
-            },
-            { type: "conclusion", duration: "3 mins." },
-            { type: "song", number: 51 }
-        ]
-    }
-};
+let meetingsData = {};
 
 // Elementos del DOM
 const adminAccessBtn = document.getElementById('admin-access-btn');
@@ -63,24 +29,202 @@ const addMeetingBtn = document.getElementById('add-meeting-btn');
 let currentEditKey = null;
 let currentMonth = '2025-10'; // Mes actual por defecto
 
-// Inicialización
+// ========== FUNCIONES SUPABASE ==========
+
+async function loadMeetingsData() {
+    try {
+        console.log('🔄 Cargando datos desde Supabase...');
+        
+        const { data, error } = await supabase
+            .from('meetings')
+            .select('*')
+            .order('date', { ascending: true });
+
+        if (error) {
+            console.error('Error de Supabase:', error);
+            throw error;
+        }
+
+        // Convertir array a objeto
+        meetingsData = {};
+        data.forEach(meeting => {
+            meetingsData[meeting.id] = {
+                date: meeting.date,
+                bibleReference: meeting.bible_reference,
+                president: meeting.president,
+                openingPrayer: meeting.opening_prayer,
+                closingPrayer: meeting.closing_prayer,
+                content: meeting.content
+            };
+        });
+
+        console.log('✅ Datos cargados:', Object.keys(meetingsData).length, 'reuniones');
+        
+        updateNavigation();
+        
+        // Cargar primera reunión del mes actual
+        const firstMeeting = Object.keys(meetingsData)
+            .filter(key => meetingsData[key].date.startsWith(currentMonth))
+            .sort((a, b) => new Date(meetingsData[a].date) - new Date(meetingsData[b].date))[0];
+        
+        if (firstMeeting) {
+            renderMeeting(firstMeeting);
+        } else if (Object.keys(meetingsData).length > 0) {
+            // Si no hay reuniones este mes, cargar la primera disponible
+            const anyMeeting = Object.keys(meetingsData)[0];
+            renderMeeting(anyMeeting);
+        } else {
+            createInitialData();
+        }
+
+    } catch (error) {
+        console.error('❌ Error cargando datos:', error);
+        alert('Error al cargar los datos. Usando datos locales.');
+        loadFromLocalStorage();
+    }
+}
+
+async function saveMeetingToSupabase(key, meetingData) {
+    try {
+        const { error } = await supabase
+            .from('meetings')
+            .upsert({
+                id: key,
+                date: meetingData.date,
+                bible_reference: meetingData.bibleReference,
+                president: meetingData.president,
+                opening_prayer: meetingData.openingPrayer,
+                closing_prayer: meetingData.closingPrayer,
+                content: meetingData.content,
+                updated_at: new Date().toISOString()
+            });
+
+        if (error) {
+            console.error('Error de Supabase:', error);
+            throw error;
+        }
+
+        console.log('✅ Reunión guardada en Supabase:', key);
+        return true;
+    } catch (error) {
+        console.error('❌ Error guardando en Supabase:', error);
+        saveToLocalStorage(key, meetingData);
+        return false;
+    }
+}
+
+async function deleteMeetingFromSupabase(key) {
+    try {
+        const { error } = await supabase
+            .from('meetings')
+            .delete()
+            .eq('id', key);
+
+        if (error) {
+            console.error('Error de Supabase:', error);
+            throw error;
+        }
+
+        console.log('✅ Reunión eliminada de Supabase:', key);
+        return true;
+    } catch (error) {
+        console.error('❌ Error eliminando de Supabase:', error);
+        return false;
+    }
+}
+
+// Fallback a localStorage
+function loadFromLocalStorage() {
+    const localData = JSON.parse(localStorage.getItem('meetingsData')) || {};
+    meetingsData = localData;
+    updateNavigation();
+    
+    const firstMeeting = Object.keys(meetingsData)[0];
+    if (firstMeeting) renderMeeting(firstMeeting);
+}
+
+function saveToLocalStorage(key, meetingData) {
+    meetingsData[key] = meetingData;
+    localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
+}
+
+// Crear datos iniciales si no existen
+async function createInitialData() {
+    console.log('🔄 Creando datos iniciales...');
+    
+    const initialData = {
+        "octubre-2": {
+            date: "2025-10-02",
+            bibleReference: "ECLESIASTÉS 3,4",
+            president: "NOMBRE",
+            openingPrayer: "NOMBRE",
+            closingPrayer: "NOMBRE",
+            content: [
+                { type: "song", number: 93 },
+                { type: "intro", duration: "1 min." },
+                { 
+                    type: "section", 
+                    title: "TESOROS DE LA BIBLIA", 
+                    items: [
+                        { number: 1, title: "Fortalezcan su cuerda triple", duration: "10 mins.", participants: "NOMBRE / NOMBRE" },
+                        { number: 2, title: "Busquemos perlas escondidas", duration: "10 mins.", participants: "NOMBRE / NOMBRE" },
+                        { number: 3, title: "Lectura de la Biblia", duration: "4 mins.", participants: "NOMBRE / NOMBRE" }
+                    ]
+                },
+                { 
+                    type: "section", 
+                    title: "SEAMOS MEJORES MAESTROS", 
+                    items: [
+                        { number: 4, title: "De casa en casa", duration: "4 mins.", participants: "NOMBRE / NOMBRE" },
+                        { number: 5, title: "Predicación Informal", duration: "4 mins.", participants: "NOMBRE / NOMBRE" },
+                        { number: 6, title: "Discurso", duration: "4 mins.", participants: "NOMBRE" }
+                    ]
+                },
+                { type: "song", number: 131 },
+                { 
+                    type: "section", 
+                    title: "NUESTRA VIDA CRISTIANA", 
+                    items: [
+                        { number: 7, title: "Cuando tengan problemas en su matrimonio, no aparten a Jehová de su vida", duration: "4 mins.", participants: "NOMBRE" },
+                        { number: 8, title: "Estudio bíblico de congregación", duration: "30 mins.", participants: "NOMBRE / NOMBRE", conductor: true }
+                    ]
+                },
+                { type: "conclusion", duration: "3 mins." },
+                { type: "song", number: 51 }
+            ]
+        }
+    };
+
+    let savedCount = 0;
+    for (const [key, meeting] of Object.entries(initialData)) {
+        const success = await saveMeetingToSupabase(key, meeting);
+        if (success) {
+            meetingsData[key] = meeting;
+            savedCount++;
+        }
+    }
+
+    if (savedCount > 0) {
+        updateNavigation();
+        const firstKey = Object.keys(meetingsData)[0];
+        if (firstKey) renderMeeting(firstKey);
+        
+        alert('✅ Datos iniciales creados en la base de datos.');
+    }
+}
+
+// ========== INICIALIZACIÓN ==========
+
 document.addEventListener('DOMContentLoaded', function() {
     // Inicializar selector de mes primero
     initializeMonthSelector();
     updateMonthDisplay();
-    updateNavigation();
+    
+    // Cargar datos desde Supabase
+    loadMeetingsData();
     
     // Inicializar elementos dinámicos (solo event listeners)
     initializeDynamicElements();
-    
-    // Cargar la primera reunión disponible
-    const firstMeeting = Object.keys(meetingsData)
-        .filter(key => meetingsData[key].date.startsWith(currentMonth))
-        .sort((a, b) => new Date(meetingsData[a].date) - new Date(meetingsData[b].date))[0];
-    
-    if (firstMeeting) {
-        renderMeeting(firstMeeting);
-    }
     
     // Event listeners para administración
     adminAccessBtn.addEventListener('click', showLoginModal);
@@ -116,7 +260,144 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// ========== FUNCIONES PARA GENERACIÓN DE PLANTILLAS POR MES ==========
+// ========== FUNCIONES MODIFICADAS PARA SUPABASE ==========
+
+async function handleMeetingSubmit(e) {
+    e.preventDefault();
+    
+    const date = document.getElementById('meeting-date').value;
+    const key = document.getElementById('meeting-key').value;
+    const bibleReference = document.getElementById('meeting-bible').value;
+    const president = document.getElementById('meeting-president').value;
+    const openingPrayer = document.getElementById('meeting-opening-prayer').value;
+    const closingPrayer = document.getElementById('meeting-closing-prayer').value;
+    
+    const songOpening = parseInt(document.getElementById('song-opening').value);
+    const songMiddle = parseInt(document.getElementById('song-middle').value);
+    const songClosing = parseInt(document.getElementById('song-closing').value);
+
+    const treasure1Title = document.getElementById('treasure-1-title').value;
+    const treasure2Title = document.getElementById('treasure-2-title').value;
+    const treasure3Title = document.getElementById('treasure-3-title').value;
+    const treasure1Participants = document.getElementById('treasure-1-participants').value;
+    const treasure2Participants = document.getElementById('treasure-2-participants').value;
+    const treasure3Participants = document.getElementById('treasure-3-participants').value;
+    const treasure1Duration = document.getElementById('treasure-1-duration').value;
+    const treasure2Duration = document.getElementById('treasure-2-duration').value;
+    const treasure3Duration = document.getElementById('treasure-3-duration').value;
+
+    // Generar el contenido automáticamente desde los campos del formulario
+    const content = generateContentFromForm({
+        songOpening, songMiddle, songClosing,
+        treasure1Title, treasure2Title, treasure3Title,
+        treasure1Participants, treasure2Participants, treasure3Participants,
+        treasure1Duration, treasure2Duration, treasure3Duration
+    });
+    
+    const meetingData = {
+        date,
+        bibleReference,
+        president,
+        openingPrayer,
+        closingPrayer,
+        content
+    };
+    
+    // Guardar en Supabase
+    const success = await saveMeetingToSupabase(key, meetingData);
+    
+    if (success) {
+        if (currentEditKey && currentEditKey !== key) {
+            await deleteMeetingFromSupabase(currentEditKey);
+            delete meetingsData[currentEditKey];
+        }
+        
+        meetingsData[key] = meetingData;
+        meetingModal.style.display = 'none';
+        renderAdminMeetings();
+        
+        const activeBtn = document.querySelector('.nav-btn.active');
+        if (activeBtn && activeBtn.getAttribute('data-section') === key) {
+            renderMeeting(key);
+        }
+        
+        alert('✅ Reunión guardada exitosamente en la base de datos.');
+    } else {
+        alert('⚠️ Error al guardar en la base de datos. Los datos se guardaron localmente.');
+    }
+}
+
+async function deleteMeeting(key) {
+    if (confirm(`¿Estás seguro de que quieres eliminar la reunión del ${formatDisplayDate(meetingsData[key].date)}?`)) {
+        const success = await deleteMeetingFromSupabase(key);
+        
+        if (success) {
+            delete meetingsData[key];
+            renderAdminMeetings();
+            
+            const activeBtn = document.querySelector('.nav-btn.active');
+            if (activeBtn && activeBtn.getAttribute('data-section') === key) {
+                const firstKey = Object.keys(meetingsData)[0];
+                if (firstKey) {
+                    document.querySelector(`.nav-btn[data-section="${firstKey}"]`).click();
+                } else {
+                    document.getElementById('meeting-content').innerHTML = 
+                        '<div class="empty-state"><h3>No hay reuniones programadas</h3></div>';
+                }
+            }
+            
+            alert('✅ Reunión eliminada exitosamente de la base de datos.');
+        } else {
+            alert('❌ Error al eliminar de la base de datos.');
+        }
+    }
+}
+
+async function generateMonthTemplates() {
+    if (!confirm(`¿Generar plantillas para ${getMonthName(currentMonth)}? Esto creará reuniones para todos los jueves del mes que no tengan ya una plantilla.`)) {
+        return;
+    }
+    
+    const [year, month] = currentMonth.split('-').map(Number);
+    const weeks = getWeeksInMonth(year, month);
+    
+    let generatedCount = 0;
+    let skippedCount = 0;
+    
+    for (const week of weeks) {
+        const meetingDate = week.start;
+        
+        const existingMeeting = Object.keys(meetingsData).find(key => {
+            const storedMeeting = meetingsData[key];
+            return storedMeeting.date === meetingDate;
+        });
+        
+        if (!existingMeeting) {
+            const newMeeting = createMeetingTemplate(meetingDate, weeks.indexOf(week) + 1);
+            const success = await saveMeetingToSupabase(meetingDate, newMeeting);
+            
+            if (success) {
+                meetingsData[meetingDate] = newMeeting;
+                generatedCount++;
+            }
+        } else {
+            skippedCount++;
+        }
+    }
+    
+    if (generatedCount > 0) {
+        updateNavigation();
+        if (adminPanel.style.display === 'block') {
+            renderAdminMeetings();
+        }
+        
+        alert(`✅ Se generaron ${generatedCount} nuevas plantillas para ${getMonthName(currentMonth)}. ${skippedCount > 0 ? `Se omitieron ${skippedCount} reuniones que ya existían.` : ''}`);
+    } else {
+        alert(`ℹ️ No se generaron nuevas plantillas. ${skippedCount > 0 ? `Todas las ${skippedCount} reuniones para ${getMonthName(currentMonth)} ya existen.` : 'No hay jueves en este mes para generar reuniones.'}`);
+    }
+}
+
+// ========== FUNCIONES EXISTENTES (MANTENER DE TU CÓDIGO ORIGINAL) ==========
 
 function initializeMonthSelector() {
     const monthSelect = document.getElementById('month-select');
@@ -137,50 +418,6 @@ function initializeMonthSelector() {
     
     if (generateBtn) {
         generateBtn.addEventListener('click', generateMonthTemplates);
-    }
-}
-
-function generateMonthTemplates() {
-    if (!confirm(`¿Generar plantillas para ${getMonthName(currentMonth)}? Esto creará reuniones para todos los jueves del mes que no tengan ya una plantilla.`)) {
-        return;
-    }
-    
-    const [year, month] = currentMonth.split('-').map(Number);
-    const weeks = getWeeksInMonth(year, month);
-    
-    let generatedCount = 0;
-    let skippedCount = 0;
-    
-    weeks.forEach((week, index) => {
-        const meetingDate = week.start;
-        
-        // VERIFICAR CORRECTAMENTE si ya existe una reunión para esta fecha
-        const existingMeeting = Object.keys(meetingsData).find(key => {
-            const storedMeeting = meetingsData[key];
-            return storedMeeting.date === meetingDate;
-        });
-        
-        if (!existingMeeting) {
-            meetingsData[meetingDate] = createMeetingTemplate(meetingDate, index + 1);
-            generatedCount++;
-        } else {
-            skippedCount++;
-        }
-    });
-    
-    // Guardar cambios solo si se generaron nuevas plantillas
-    if (generatedCount > 0) {
-        localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
-        
-        // Actualizar navegación y vista
-        updateNavigation();
-        if (adminPanel.style.display === 'block') {
-            renderAdminMeetings();
-        }
-        
-        alert(`✅ Se generaron ${generatedCount} nuevas plantillas para ${getMonthName(currentMonth)}. ${skippedCount > 0 ? `Se omitieron ${skippedCount} reuniones que ya existían.` : ''}`);
-    } else {
-        alert(`ℹ️ No se generaron nuevas plantillas. ${skippedCount > 0 ? `Todas las ${skippedCount} reuniones para ${getMonthName(currentMonth)} ya existen.` : 'No hay jueves en este mes para generar reuniones.'}`);
     }
 }
 
@@ -338,8 +575,6 @@ function updateMonthDisplay() {
         monthDisplay.textContent = `Las Colonias \u{1F30B} ${getMonthName(currentMonth)}`;
     }
 }
-
-// ========== FUNCIONES EXISTENTES (MANTENER) ==========
 
 function renderMeeting(sectionId) {
     const meeting = meetingsData[sectionId];
@@ -602,80 +837,6 @@ function openEditModal(key) {
     
     currentEditKey = key;
     meetingModal.style.display = 'block';
-}
-
-function handleMeetingSubmit(e) {
-    e.preventDefault();
-    
-    const date = document.getElementById('meeting-date').value;
-    const key = document.getElementById('meeting-key').value;
-    const bibleReference = document.getElementById('meeting-bible').value;
-    const president = document.getElementById('meeting-president').value;
-    const openingPrayer = document.getElementById('meeting-opening-prayer').value;
-    const closingPrayer = document.getElementById('meeting-closing-prayer').value;
-    
-    const songOpening = parseInt(document.getElementById('song-opening').value);
-    const songMiddle = parseInt(document.getElementById('song-middle').value);
-    const songClosing = parseInt(document.getElementById('song-closing').value);
-
-    const treasure1Title = document.getElementById('treasure-1-title').value;
-    const treasure2Title = document.getElementById('treasure-2-title').value;
-    const treasure3Title = document.getElementById('treasure-3-title').value;
-    const treasure1Participants = document.getElementById('treasure-1-participants').value;
-    const treasure2Participants = document.getElementById('treasure-2-participants').value;
-    const treasure3Participants = document.getElementById('treasure-3-participants').value;
-    const treasure1Duration = document.getElementById('treasure-1-duration').value;
-    const treasure2Duration = document.getElementById('treasure-2-duration').value;
-    const treasure3Duration = document.getElementById('treasure-3-duration').value;
-
-    // Generar el contenido automáticamente desde los campos del formulario
-    const content = generateContentFromForm({
-        songOpening, songMiddle, songClosing,
-        treasure1Title, treasure2Title, treasure3Title,
-        treasure1Participants, treasure2Participants, treasure3Participants,
-        treasure1Duration, treasure2Duration, treasure3Duration
-    });
-    
-    if (currentEditKey && currentEditKey !== key) {
-        delete meetingsData[currentEditKey];
-    }
-    
-    meetingsData[key] = {
-        date,
-        bibleReference,
-        president,
-        openingPrayer,
-        closingPrayer,
-        content
-    };
-    
-    localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
-    meetingModal.style.display = 'none';
-    renderAdminMeetings();
-    
-    const activeBtn = document.querySelector('.nav-btn.active');
-    if (activeBtn && activeBtn.getAttribute('data-section') === key) {
-        renderMeeting(key);
-    }
-}
-
-function deleteMeeting(key) {
-    if (confirm(`¿Estás seguro de que quieres eliminar la reunión del ${formatDisplayDate(meetingsData[key].date)}?`)) {
-        delete meetingsData[key];
-        localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
-        renderAdminMeetings();
-        
-        const activeBtn = document.querySelector('.nav-btn.active');
-        if (activeBtn && activeBtn.getAttribute('data-section') === key) {
-            const firstKey = Object.keys(meetingsData)[0];
-            if (firstKey) {
-                document.querySelector(`.nav-btn[data-section="${firstKey}"]`).click();
-            } else {
-                document.getElementById('meeting-content').innerHTML = 
-                    '<div class="empty-state"><h3>No hay reuniones programadas</h3></div>';
-            }
-        }
-    }
 }
 
 function formatDisplayDate(dateString) {
