@@ -125,8 +125,9 @@ function initializeMonthSelector() {
         monthSelect.addEventListener('change', function() {
             currentMonth = this.value;
             updateMonthDisplay();
-            updateNavigation();
-            // ACTUALIZAR TAMBIÉN EL MANTENEDOR SI ESTÁ VISIBLE
+            updateNavigation(); // Esto actualizará la navegación Y cargará la primera reunión
+            
+            // Si estamos en vista de administración, actualizar también
             if (adminPanel.style.display === 'block') {
                 renderAdminMeetings();
             }
@@ -137,6 +138,7 @@ function initializeMonthSelector() {
         generateBtn.addEventListener('click', generateMonthTemplates);
     }
 }
+
 
 function generateMonthTemplates() {
     if (!confirm(`¿Generar plantillas para ${getMonthName(currentMonth)}? Esto creará reuniones para todos los jueves del mes.`)) {
@@ -252,7 +254,7 @@ function updateNavigation() {
     // Limpiar navegación existente
     navigation.innerHTML = '';
     
-    // Obtener reuniones del mes actual
+    // Obtener reuniones del mes actual - CORREGIDO
     const monthMeetings = Object.keys(meetingsData)
         .filter(key => {
             const meetingDate = meetingsData[key].date;
@@ -279,7 +281,26 @@ function updateNavigation() {
     
     // Si no hay reuniones, mostrar mensaje
     if (monthMeetings.length === 0) {
-        navigation.innerHTML = '<div class="empty-state"><p>No hay reuniones programadas para este mes</p></div>';
+        navigation.innerHTML = `
+            <div class="empty-state">
+                <p>No hay reuniones programadas para ${getMonthName(currentMonth)}</p>
+                <p style="margin-top: 10px; font-size: 0.9em; color: #7f8c8d;">
+                    Usa el acceso administrativo para generar plantillas o agregar reuniones.
+                </p>
+            </div>
+        `;
+    }
+    
+    // Cargar la primera reunión del mes automáticamente
+    if (monthMeetings.length > 0) {
+        renderMeeting(monthMeetings[0]);
+    } else {
+        document.getElementById('meeting-content').innerHTML = `
+            <div class="empty-state">
+                <h3>No hay reuniones programadas</h3>
+                <p>No hay reuniones programadas para ${getMonthName(currentMonth)}.</p>
+            </div>
+        `;
     }
 }
 
@@ -311,7 +332,15 @@ function renderMeeting(sectionId) {
     const meetingContent = document.getElementById('meeting-content');
     
     if (!meeting) {
-        meetingContent.innerHTML = '<div class="empty-state"><h3>Reunión no encontrada</h3><p>Esta reunión no está programada aún.</p></div>';
+        meetingContent.innerHTML = `
+            <div class="empty-state">
+                <h3>Reunión no programada</h3>
+                <p>Esta reunión no está programada para ${getMonthName(currentMonth)}.</p>
+                <p style="margin-top: 10px; font-size: 0.9em; color: #7f8c8d;">
+                    Selecciona otra fecha o contacta al administrador.
+                </p>
+            </div>
+        `;
         return;
     }
     
@@ -906,3 +935,29 @@ function updateContentWithFormValues(content, values) {
         return item;
     });    
 }
+// ========== FIN DE NUEVAS FUNCIONES ==========
+// ========== FUNCIÓN TEMPORAL PARA LIMPIAR PLANTILLAS DUPLICADAS ==========
+// Función temporal para limpiar plantillas duplicadas - EJECUTAR UNA SOLA VEZ
+/*function cleanDuplicateTemplates() {
+    const keysToDelete = [];
+    
+    // Buscar todas las claves que empiecen con "semana-"
+    Object.keys(meetingsData).forEach(key => {
+        if (key.startsWith('semana-')) {
+            keysToDelete.push(key);
+        }
+    });
+    
+    // Eliminar las plantillas duplicadas
+    keysToDelete.forEach(key => {
+        delete meetingsData[key];
+    });
+    
+    // Guardar cambios
+    localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
+    
+    alert(`Se eliminaron ${keysToDelete.length} plantillas duplicadas`);
+    updateNavigation();
+    renderAdminMeetings();
+}*/
+// ========== FIN FUNCIÓN TEMPORAL ==========
