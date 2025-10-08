@@ -688,7 +688,21 @@ function updateNavigation() {
     
     // Cargar la reunión activa automáticamente
     if (activeMeetingKey) {
-        renderMeeting(activeMeetingKey);
+        // Forzar la renderización de la reunión activa
+        setTimeout(() => {
+            renderMeeting(activeMeetingKey);
+            
+            // También actualizar el selector de mes si es necesario
+            const meetingDate = new Date(meetingsData[activeMeetingKey].date);
+            const meetingMonth = `${meetingDate.getFullYear()}-${String(meetingDate.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (meetingMonth !== currentMonth) {
+                currentMonth = meetingMonth;
+                updateMonthDisplay();
+                const monthSelect = document.getElementById('month-select');
+                if (monthSelect) monthSelect.value = currentMonth;
+            }
+        }, 0);
     } else {
         document.getElementById('meeting-content').innerHTML = `
             <div class="empty-state">
