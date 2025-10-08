@@ -398,6 +398,76 @@ async function generateMonthTemplates() {
 }
 
 // ========== FUNCIONES EXISTENTES (MANTENER DE TU CÓDIGO ORIGINAL) ==========
+// ========== FUNCIÓN PARA OBTENER REUNIÓN ACTUAL ==========
+
+function getCurrentWeekMeeting() {
+    // Obtener fecha actual
+    const today = new Date();
+    
+    // Obtener jueves de esta semana (día de reunión)
+    const currentThursday = getThursdayOfWeek(today);
+    
+    // Formatear fecha para comparación
+    const currentThursdayStr = formatDateForInput(currentThursday);
+    
+    console.log('🔍 Buscando reunión para:', currentThursdayStr);
+    
+    // Buscar reunión exacta para el jueves actual
+    let exactMatch = Object.keys(meetingsData).find(key => {
+        return meetingsData[key].date === currentThursdayStr;
+    });
+    
+    if (exactMatch) {
+        console.log('✅ Encontrada reunión exacta:', exactMatch);
+        return exactMatch;
+    }
+    
+    // Si no hay reunión exacta, buscar la más cercana (pasada o futura)
+    console.log('⚠️ No hay reunión exacta, buscando la más cercana...');
+    
+    const sortedMeetings = Object.keys(meetingsData)
+        .sort((a, b) => new Date(meetingsData[a].date) - new Date(meetingsData[b].date));
+    
+    // Buscar la reunión más cercana a la fecha actual
+    let closestMeeting = null;
+    let minDiff = Infinity;
+    
+    sortedMeetings.forEach(key => {
+        const meetingDate = new Date(meetingsData[key].date);
+        const diff = Math.abs(meetingDate - today);
+        
+        if (diff < minDiff) {
+            minDiff = diff;
+            closestMeeting = key;
+        }
+    });
+    
+    if (closestMeeting) {
+        console.log('📅 Reunión más cercana encontrada:', closestMeeting);
+        return closestMeeting;
+    }
+    
+    console.log('❌ No se encontró ninguna reunión');
+    return null;
+}
+
+function getThursdayOfWeek(date) {
+    // Clonar fecha para no modificar la original
+    const thursday = new Date(date);
+    
+    // Obtener día de la semana (0 = domingo, 1 = lunes, ..., 4 = jueves)
+    const dayOfWeek = thursday.getDay();
+    
+    // Calcular diferencia hasta el jueves
+    // Si hoy es jueves (4), diferencia = 0
+    // Si hoy es viernes (5), diferencia = -1 (jueves pasado)
+    // Si hoy es miércoles (3), diferencia = 1 (jueves siguiente)
+    const diff = 4 - dayOfWeek;
+    
+    thursday.setDate(thursday.getDate() + diff);
+    
+    return thursday;
+}
 
 function initializeMonthSelector() {
     const monthSelect = document.getElementById('month-select');
@@ -499,7 +569,7 @@ function createMeetingTemplate(date, weekNumber) {
     };
 }
 
-function updateNavigation() {
+/*function updateNavigation() {
     const navigation = document.querySelector('.navigation');
     if (!navigation) return;
     
@@ -546,6 +616,79 @@ function updateNavigation() {
     // Cargar la primera reunión del mes automáticamente
     if (monthMeetings.length > 0) {
         renderMeeting(monthMeetings[0]);
+    } else {
+        document.getElementById('meeting-content').innerHTML = `
+            <div class="empty-state">
+                <h3>No hay reuniones programadas</h3>
+                <p>No hay reuniones programadas para ${getMonthName(currentMonth)}.</p>
+            </div>
+        `;
+    }
+}*/
+function updateNavigation() {
+    const navigation = document.querySelector('.navigation');
+    if (!navigation) return;
+    
+    // Limpiar navegación existente
+    navigation.innerHTML = '';
+    
+    // Obtener reuniones del mes actual
+    const monthMeetings = Object.keys(meetingsData)
+        .filter(key => {
+            const meetingDate = meetingsData[key].date;
+            return meetingDate.startsWith(currentMonth);
+        })
+        .sort((a, b) => new Date(meetingsData[a].date) - new Date(meetingsData[b].date));
+    
+    // Obtener reunión actual
+    const currentMeetingKey = getCurrentWeekMeeting();
+    let activeMeetingKey = monthMeetings.length > 0 ? monthMeetings[0] : null;
+    
+    // Si hay reunión actual y está en el mes seleccionado, usarla
+    if (currentMeetingKey && monthMeetings.includes(currentMeetingKey)) {
+        activeMeetingKey = currentMeetingKey;
+    }
+    
+    // Crear botones de navegación
+    monthMeetings.forEach((key) => {
+        const meeting = meetingsData[key];
+        const button = document.createElement('button');
+        button.className = `nav-btn ${key === activeMeetingKey ? 'active' : ''}`;
+        button.setAttribute('data-section', key);
+        button.textContent = formatDisplayDate(meeting.date);
+        
+        // Marcar con indicador si es la reunión actual
+        if (key === currentMeetingKey) {
+            const indicator = document.createElement('span');
+            indicator.textContent = ' 🔵';
+            indicator.title = 'Reunión de esta semana';
+            button.appendChild(indicator);
+        }
+        
+        button.addEventListener('click', function() {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            renderMeeting(key);
+        });
+        
+        navigation.appendChild(button);
+    });
+    
+    // Si no hay reuniones, mostrar mensaje
+    if (monthMeetings.length === 0) {
+        navigation.innerHTML = `
+            <div class="empty-state">
+                <p>No hay reuniones programadas para ${getMonthName(currentMonth)}</p>
+                <p style="margin-top: 10px; font-size: 0.9em; color: #7f8c8d;">
+                    Usa el acceso administrativo para generar plantillas o agregar reuniones.
+                </p>
+            </div>
+        `;
+    }
+    
+    // Cargar la reunión activa automáticamente
+    if (activeMeetingKey) {
+        renderMeeting(activeMeetingKey);
     } else {
         document.getElementById('meeting-content').innerHTML = `
             <div class="empty-state">
